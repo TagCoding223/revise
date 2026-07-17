@@ -24,9 +24,13 @@ export default function Auth() {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Determine active tab based on the URL
+  // Tabs state tracking
   const isLoginRoute = location.pathname === '/login';
   const [activeTab, setActiveTab] = useState(isLoginRoute ? 'login' : 'signup');
+
+  // Show/Hide password toggles
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
 
   // Sync state if URL changes directly
   useEffect(() => {
@@ -58,18 +62,15 @@ export default function Auth() {
   // --- Submission Handlers ---
   const onLogin = (data) => {
     console.log("Login Data:", data);
-    // Add your API call here, then redirect to /dashboard
   };
 
   const onSignup = (data) => {
     console.log("Signup Data:", data);
-    // Add your API call here, then redirect to OTP verification
     navigate('/verify-otp');
   };
 
   const handleGoogleAuth = () => {
     console.log(`Triggering Google Auth for ${activeTab}`);
-    // Trigger Spring Security OAuth2 flow here
   };
 
   return (
@@ -101,15 +102,14 @@ export default function Auth() {
             Sign Up
           </button>
           
-          {/* Animated Active Indicator Line */}
           <div 
             className="absolute bottom-0 h-0.5 bg-blue-600 dark:bg-blue-400 transition-all duration-300 ease-in-out w-1/2"
             style={{ left: activeTab === 'login' ? '0%' : '50%' }}
           />
         </div>
 
-        {/* Content Area with smooth transition */}
-        <div className="p-6 sm:p-8 relative min-h-[420px]">
+        {/* Content Area */}
+        <div className="p-6 sm:p-8 relative min-h-[440px]">
           
           {/* LOGIN FORM */}
           <div 
@@ -133,12 +133,30 @@ export default function Auth() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-                <input
-                  type="password"
-                  {...registerLogin('password')}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white"
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <input
+                    type={showLoginPassword ? "text" : "password"}
+                    {...registerLogin('password')}
+                    className="w-full px-4 py-2 pr-10 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                  >
+                    {showLoginPassword ? (
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {loginErrors.password && <p className="text-red-500 text-xs mt-1">{loginErrors.password.message}</p>}
               </div>
 
@@ -207,23 +225,43 @@ export default function Auth() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-                <input
-                  type="password"
-                  {...registerSignup('password')}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white"
-                  placeholder="••••••••"
-                />
-                {signupErrors.password && <p className="text-red-500 text-xs mt-1">{signupErrors.password.message}</p>}
+                <div className="relative">
+                  <input
+                    type={showSignupPassword ? "text" : "password"}
+                    {...registerSignup('password')}
+                    className="w-full px-4 py-2 pr-10 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSignupPassword(!showSignupPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                  >
+                    {showSignupPassword ? (
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {signupErrors.password && <p className="text-red-500 text-xs mt-1">{signupErrors.signupPassword?.message || signupErrors.password.message}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
-                <input
-                  type="password"
-                  {...registerSignup('confirmPassword')}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white"
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <input
+                    type={showSignupPassword ? "text" : "password"}
+                    {...registerSignup('confirmPassword')}
+                    className="w-full px-4 py-2 pr-10 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white"
+                    placeholder="••••••••"
+                  />
+                </div>
                 {signupErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{signupErrors.confirmPassword.message}</p>}
               </div>
 
