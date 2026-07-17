@@ -10,6 +10,7 @@ const Landing = lazy(() => import('./pages/Landing'));
 const Auth = lazy(() => import('./pages/Auth')); // Reused for Login/Signup
 const OtpVerify = lazy(() => import('./pages/OtpVerify'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const SetPassword = lazy(() => import('./pages/SetPassword'));
 
 export default function App() {
   return (
@@ -50,6 +51,15 @@ export default function App() {
               element={
                 <PublicRoute>
                   <OtpVerify />
+                </PublicRoute>
+              } 
+            />
+
+            <Route 
+              path="/set-password" 
+              element={
+                <PublicRoute>
+                  <SetPassword />
                 </PublicRoute>
               } 
             />
