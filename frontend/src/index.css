@@ -1,6 +1,9 @@
 @import "tailwindcss";
+
+/* dark mode enable */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* allow to apply dark mode on base level */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,6 +13,23 @@
     @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300;
   }
 }
+
+/* custom animation for TopLoadingBar */
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+@layer utilities {
+  .animate-progress-bar {
+    animation: progress 1.5s infinite linear;
+  }
+}
+
 
 :root {
   --text: #6b6375;

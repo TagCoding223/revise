@@ -1,70 +1,70 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './routes/ProtectedRoute';
 import PublicRoute from './routes/PublicRoute';
+import TopLoadingBar from './components/shared/TopLoadingBar';
 
-// Placeholder imports for your pages
-const Landing = () => <div className="p-4">Landing Page</div>;
-const Auth = () => <div className="p-4">Login / Signup Page</div>;
-const OtpVerify = () => <div className="p-4">OTP Verification Page</div>;
-const Dashboard = () => <div className="p-4">User Dashboard</div>;
+// 1. Dynamically import pages using React.lazy
+const Landing = lazy(() => import('./pages/Landing'));
+const Auth = lazy(() => import('./pages/Auth')); // Reused for Login/Signup
+const OtpVerify = lazy(() => import('./pages/OtpVerify'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+    <div className="min-h-screen">
       <Navbar />
       
-      {/* 
-        The layout wrapper to ensure all pages stay centered 
-        and leave the left/right completely blank on large screens.
-      */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Routes>
-          {/* Public Routes */}
-          <Route 
-            path="/" 
-            element={
-              <PublicRoute>
-                <Landing />
-              </PublicRoute>
-            } 
-          />
-          <Route 
-            path="/login" 
-            element={
-              <PublicRoute>
-                <Auth />
-              </PublicRoute>
-            } 
-          />
-          <Route 
-            path="/signup" 
-            element={
-              <PublicRoute>
-                <Auth />
-              </PublicRoute>
-            } 
-          />
-          <Route 
-            path="/verify-otp" 
-            element={
-              <PublicRoute>
-                <OtpVerify />
-              </PublicRoute>
-            } 
-          />
+        {/* 2. Wrap the Routes in Suspense, passing the loading bar to the fallback prop */}
+        <Suspense fallback={<TopLoadingBar />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route 
+              path="/" 
+              element={
+                <PublicRoute>
+                  <Landing />
+                </PublicRoute>
+              } 
+            />
+            <Route 
+              path="/login" 
+              element={
+                <PublicRoute>
+                  <Auth />
+                </PublicRoute>
+              } 
+            />
+            <Route 
+              path="/signup" 
+              element={
+                <PublicRoute>
+                  <Auth />
+                </PublicRoute>
+              } 
+            />
+            <Route 
+              path="/verify-otp" 
+              element={
+                <PublicRoute>
+                  <OtpVerify />
+                </PublicRoute>
+              } 
+            />
 
-          {/* Protected Routes */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
-        </Routes>
+            {/* Protected Routes */}
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+          </Routes>
+        </Suspense>
       </main>
     </div>
   );
