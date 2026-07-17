@@ -1,16 +1,13 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
-// Assuming you have these hooks exported from your context files
-// import { useAuth } from '../context/AuthContext';
-// import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Navbar() {
   const navigate = useNavigate();
   
-  // MOCK STATE: Replace these with your actual context hooks
-  const { user, logout } = { user: null, logout: () => {} }; // const { user, logout } = useAuth();
-  const { isDark, toggleTheme } = { isDark: false, toggleTheme: () => {} }; // const { isDark, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
 
   const handleLogout = () => {
     logout();
