@@ -68,11 +68,19 @@ export default function App() {
             <Route 
               path="/dashboard" 
               element={
+                <PublicRoute>
+                  <Dashboard />
+                </PublicRoute>
+              } 
+            />
+            {/* <Route 
+              path="/dashboard" 
+              element={
                 <ProtectedRoute>
                   <Dashboard />
                 </ProtectedRoute>
               } 
-            />
+            /> */}
           </Routes>
         </Suspense>
       </main>
