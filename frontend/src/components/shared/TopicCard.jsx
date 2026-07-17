@@ -1,6 +1,16 @@
 import React from 'react';
 
 export function TopicCard({ topic, isActive, onView, onUpdate, onDelete, onRevise }) {
+  // Helper to format dates consistently or show a fallback
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   return (
     <div 
       className={`p-5 rounded-xl border transition-all duration-300 flex flex-col justify-between ${
@@ -14,19 +24,35 @@ export function TopicCard({ topic, isActive, onView, onUpdate, onDelete, onRevis
           <h3 className={`font-semibold text-lg ${isActive ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
             {topic.title}
           </h3>
-          <span className="inline-flex items-center px-2.5 py-1 text-center py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 shrink-0 ml-2">
             Stage {topic.stage}
           </span>
         </div>
+        
         <p className={`text-sm mb-4 line-clamp-2 ${isActive ? 'text-gray-600 dark:text-gray-400' : 'text-gray-500 dark:text-gray-500'}`}>
           {topic.description}
         </p>
+
+        {/* Revision Dates Display */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
+          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+            <svg className="w-3.5 h-3.5 mr-1.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Last: {formatDate(topic.lastRevisionDate)}
+          </div>
+          <div className={`flex items-center text-xs font-medium ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>
+            <svg className="w-3.5 h-3.5 mr-1.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Next: {formatDate(topic.nextRevisionDate)}
+          </div>
+        </div>
       </div>
 
       {/* Card Actions */}
       <div className="flex items-center gap-2 pt-4 border-t border-gray-100 dark:border-gray-700/50 mt-auto">
         
-        {/* View Button */}
         <button 
           onClick={() => onView(topic)}
           className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors" 
@@ -38,7 +64,6 @@ export function TopicCard({ topic, isActive, onView, onUpdate, onDelete, onRevis
           </svg>
         </button>
 
-        {/* Update Button */}
         <button 
           onClick={() => onUpdate(topic)}
           className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors" 
@@ -49,7 +74,6 @@ export function TopicCard({ topic, isActive, onView, onUpdate, onDelete, onRevis
           </svg>
         </button>
 
-        {/* Delete Button */}
         <button 
           onClick={() => onDelete(topic)}
           className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors" 
@@ -60,7 +84,6 @@ export function TopicCard({ topic, isActive, onView, onUpdate, onDelete, onRevis
           </svg>
         </button>
 
-        {/* Revise Button */}
         <button 
           onClick={() => onRevise(topic.id)}
           disabled={!isActive}

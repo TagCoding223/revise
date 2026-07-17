@@ -1,14 +1,18 @@
 import React, { useState, Suspense, lazy } from 'react';
 import { TopicCard } from '../components/shared/TopicCard';
-import TopLoadingBar from '../components/shared/TopLoadingBar'; // Added missing import
+import TopLoadingBar from '../components/shared/TopLoadingBar';
 
-// Lazy loaded modals
 const CreateRevisionModal = lazy(() => import('../components/modals/CreateRevisionModal'));
 const UpdateRevisionModal = lazy(() => import('../components/modals/UpdateRevisionModal'));
 const ViewRevisionModal = lazy(() => import('../components/modals/ViewRevisionModal'));
 const DeleteConfirmModal = lazy(() => import('../components/modals/DeleteConfirmModal'));
 
-// Updated mock data utilizing arrays for links
+// Dynamic date helpers for realistic mock data
+const today = new Date().toISOString();
+const yesterday = new Date(Date.now() - 86400000).toISOString();
+const tomorrow = new Date(Date.now() + 86400000).toISOString();
+const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString();
+
 const initialTopics = [
     {
         id: 'uuid-1',
@@ -16,7 +20,9 @@ const initialTopics = [
         description: 'Workflow and inner workings of the loading phase. Focus on system environment classpath variable overrides and handling file-based inputs.',
         links: ['https://docs.oracle.com/javase/specs/', 'https://www.baeldung.com/java-classloaders'],
         stage: 3,
-        category: 'today'
+        category: 'today',
+        lastRevisionDate: yesterday,
+        nextRevisionDate: today
     },
     {
         id: 'uuid-2',
@@ -24,7 +30,9 @@ const initialTopics = [
         description: 'Differences between 3NF, 4NF, and 5NF with practical examples of data anomalies.',
         links: [],
         stage: 1,
-        category: 'today'
+        category: 'today',
+        lastRevisionDate: null,
+        nextRevisionDate: today
     },
     {
         id: 'uuid-3',
@@ -32,7 +40,9 @@ const initialTopics = [
         description: 'Directory structure routing and hidden configuration files behavior when deleted.',
         links: [],
         stage: 2,
-        category: 'tomorrow'
+        category: 'tomorrow',
+        lastRevisionDate: today,
+        nextRevisionDate: tomorrow
     },
     {
         id: 'uuid-4',
@@ -40,7 +50,9 @@ const initialTopics = [
         description: 'Comparison between greedy, dynamic programming, and divide & conquer strategies.',
         links: ['https://leetcode.com/problems/'],
         stage: 5,
-        category: 'other'
+        category: 'other',
+        lastRevisionDate: yesterday,
+        nextRevisionDate: nextWeek
     }
 ];
 
@@ -55,12 +67,25 @@ export default function Dashboard() {
 
     const userName = "Student";
 
+    // Helper to calculate a future date based on stage (simplified for mock purposes)
+    const calculateNextDate = (currentStage) => {
+        const daysToAdd = currentStage === 1 ? 3 : currentStage === 2 ? 7 : 16;
+        return new Date(Date.now() + daysToAdd * 86400000).toISOString();
+    };
+
     // --- Handlers for Bulk Actions ---
     const handleReviseAllToday = () => {
+        const now = new Date().toISOString();
         setTopics(currentTopics =>
             currentTopics.map(t => {
                 if (t.category === 'today') {
-                    return { ...t, stage: t.stage + 1, category: 'other' };
+                    return { 
+                        ...t, 
+                        stage: t.stage + 1, 
+                        category: 'other',
+                        lastRevisionDate: now,
+                        nextRevisionDate: calculateNextDate(t.stage)
+                    };
                 }
                 return t;
             })
@@ -69,10 +94,17 @@ export default function Dashboard() {
 
     // --- Handlers for Single Card Actions ---
     const handleRevise = (topicId) => {
+        const now = new Date().toISOString();
         setTopics(currentTopics =>
             currentTopics.map(t =>
                 t.id === topicId
-                    ? { ...t, stage: t.stage + 1, category: 'other' }
+                    ? { 
+                        ...t, 
+                        stage: t.stage + 1, 
+                        category: 'other',
+                        lastRevisionDate: now,
+                        nextRevisionDate: calculateNextDate(t.stage)
+                      }
                     : t
             )
         );
@@ -80,11 +112,14 @@ export default function Dashboard() {
 
     // --- Modal Submission Handlers ---
     const handleCreateNew = (newTopicData) => {
+        const now = new Date().toISOString();
         const newTopic = {
             id: `uuid-${Date.now()}`, 
             ...newTopicData,
             stage: 1,
-            category: 'today' 
+            category: 'today',
+            lastRevisionDate: null,
+            nextRevisionDate: now // Next revision is today for a fresh topic
         };
         setTopics([newTopic, ...topics]);
         setIsCreateOpen(false);
@@ -218,7 +253,7 @@ export default function Dashboard() {
                 </section>
             )}
 
-            {/* Modals Integration - Conditionally rendered to ensure they only download when triggered */}
+            {/* Modals Integration */}
             <Suspense fallback={<TopLoadingBar />}>
                 
                 {isCreateOpen && (
