@@ -1,10 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
 export default function Landing() {
   return (
     <div className="flex flex-col space-y-20 py-10">
       
+      {/* Dynamic SEO for this specific page */}
+      <Helmet>
+        <title>Revise | Master Your Exams</title>
+        <meta 
+          name="description" 
+          content="Join Revise today. Use active recall and our 9-stage spacing cycle to permanently lock in your engineering and computer science concepts." 
+        />
+      </Helmet>
+
       {/* Hero Section */}
       <section className="text-center space-y-6">
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-white">
@@ -100,14 +110,15 @@ export default function Landing() {
       {/* Footer */}
       <footer className="pt-10 border-t border-gray-200 dark:border-gray-800 text-center text-gray-500 dark:text-gray-400 text-sm">
         <p>&copy; {new Date().getFullYear()} Revise. All rights reserved.</p>
+        <p>Developed & Design by <Link to={'https://github.com/TagCoding223'}>Vishal Chouhan</Link>.</p>
         <div className="mt-4 flex justify-center space-x-6">
-          <Link to="/about" className="hover:text-gray-900 dark:hover:text-white transition-colors">
+          <Link to="/legal#about" className="hover:text-gray-900 dark:hover:text-white transition-colors">
             About Us
           </Link>
-          <Link to="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">
+          <Link to="/legal#privacy-policy" className="hover:text-gray-900 dark:hover:text-white transition-colors">
             Privacy Policy
           </Link>
-          <Link to="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">
+          <Link to="/legal#terms-and-service" className="hover:text-gray-900 dark:hover:text-white transition-colors">
             Terms of Service
           </Link>
         </div>
