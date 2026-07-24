@@ -6,6 +6,10 @@ import com.revise.dto.request.CreateUserRequest;
 import com.revise.dto.response.UserResponse;
 import com.revise.service.UserService;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +31,7 @@ public class UserController {
         return new String("Worked");
     }
     
-    @PostMapping("/createUser")
+    @PostMapping
     public ResponseEntity<UserResponse> createUser(@RequestBody CreateUserRequest request) {
         UserResponse createdUser = userService.createUser(request);
         return new ResponseEntity<>(createdUser,HttpStatus.CREATED);
@@ -35,7 +39,16 @@ public class UserController {
     
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable String id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+        // Define the Cache-Control rule
+        CacheControl cacheRules = CacheControl.noStore();
+        return ResponseEntity.ok().cacheControl(cacheRules).body(userService.getUserById(id));
     }
     
+    // TODO: Remove or prevent to access this endpoint by normal user and public.
+    @GetMapping
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
+        // Define the Cache-Control rule
+        CacheControl cacheRules = CacheControl.noStore();
+        return ResponseEntity.ok().cacheControl(cacheRules).body(userService.getAllUsers());
+    }
 }
