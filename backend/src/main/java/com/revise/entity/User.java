@@ -37,4 +37,7 @@ public class User {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "is_email_verified", nullable = false)
+    private boolean isEmailVerified = false;
 }
