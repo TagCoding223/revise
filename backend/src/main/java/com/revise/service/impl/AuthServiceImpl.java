@@ -10,7 +10,9 @@ import com.revise.dto.response.AuthResponse;
 import com.revise.dto.response.UserResponse;
 import com.revise.entity.User;
 import com.revise.entity.UserCredential;
+import com.revise.exception.UserAlreadyExistsException;
 import com.revise.repository.UserCredentialRepository;
+import com.revise.repository.UserRepository;
 import com.revise.service.AuthService;
 import com.revise.service.UserService;
 
@@ -27,9 +29,15 @@ public class AuthServiceImpl implements AuthService{
     // Injecting the PasswordEncoder bean
     private final PasswordEncoder passwordEncoder;
 
+    // Injecting the UserRepository for the existence check
+    private final UserRepository userRepository;
+
     @Override
     public AuthResponse signup(SignupRequest request) {
-        // TODO: 1. (Future) Check if user exists. If yes, throw exception.
+        // 1. Check if user exists. If yes, throw exception.
+        if(userRepository.existsByEmail(request.getEmail())){
+            throw new UserAlreadyExistsException("You already have an account. Please log in.");
+        }
 
         // 2. Create the base User profile using the UserService
         CreateUserRequest userReq = new CreateUserRequest();
@@ -48,7 +56,7 @@ public class AuthServiceImpl implements AuthService{
 
         // Hash the password before saving
         String hashedPassword = passwordEncoder.encode(request.getPassword());
-        credential.setPasswordHash(hashedPassword); // TODO: Apply BCrypt hashing here
+        credential.setPasswordHash(hashedPassword);
 
         credentialRepository.save(credential);
 
