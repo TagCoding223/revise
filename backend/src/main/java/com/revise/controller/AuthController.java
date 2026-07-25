@@ -3,6 +3,7 @@ package com.revise.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.revise.dto.request.LoginRequest;
 import com.revise.dto.request.SignupRequest;
 import com.revise.dto.response.AuthResponse;
 import com.revise.service.AuthService;
@@ -23,6 +24,11 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> signup(@RequestBody SignupRequest request) {
         return ResponseEntity.ok(authService.signup(request));
+    }
+    
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request));
     }
     
 }
