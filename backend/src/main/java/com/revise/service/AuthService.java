@@ -1,0 +1,11 @@
+package com.revise.service;
+
+import com.revise.dto.request.LoginRequest;
+import com.revise.dto.request.SignupRequest;
+import com.revise.dto.response.AuthResponse;
+
+public interface AuthService {
+    AuthResponse signup(SignupRequest request);
+    AuthResponse login(LoginRequest request);
+    AuthResponse verifyOtp(String email, String otp);
+}
