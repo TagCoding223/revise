@@ -56,8 +56,10 @@ public class AuthServiceImpl implements AuthService{
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'login'");
+        AuthResponse response = new AuthResponse();
+        response.setMessage("Login flow reached for: "+ request.getEmail());
+        response.setToken("dummy-jwt-token-for-now");
+        return response;
     }
 
     @Override
