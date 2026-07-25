@@ -2,6 +2,7 @@ package com.revise.service.impl;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.revise.dto.request.CreateUserRequest;
 import com.revise.dto.request.LoginRequest;
@@ -13,7 +14,9 @@ import com.revise.entity.UserCredential;
 import com.revise.exception.UserAlreadyExistsException;
 import com.revise.repository.UserCredentialRepository;
 import com.revise.repository.UserRepository;
+import com.revise.repository.VerificationCodeRepository;
 import com.revise.service.AuthService;
+import com.revise.service.OtpService;
 import com.revise.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -32,7 +35,11 @@ public class AuthServiceImpl implements AuthService{
     // Injecting the UserRepository for the existence check
     private final UserRepository userRepository;
 
+    private final OtpService otpService;
+    private final VerificationCodeRepository otpRepository;
+
     @Override
+    @Transactional
     public AuthResponse signup(SignupRequest request) {
         // 1. Check if user exists. If yes, throw exception.
         if(userRepository.existsByEmail(request.getEmail())){
@@ -60,7 +67,8 @@ public class AuthServiceImpl implements AuthService{
 
         credentialRepository.save(credential);
 
-        // TODO: 4. (Future) Generate and send OTP via email.
+        // 4. Generate and send OTP via email.
+        otpService.generateAndSendOtp(request.getEmail());
 
         // 5. Return flow response
         AuthResponse response = new AuthResponse();
