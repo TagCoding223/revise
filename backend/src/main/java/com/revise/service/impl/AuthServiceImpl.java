@@ -1,5 +1,6 @@
 package com.revise.service.impl;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.revise.dto.request.CreateUserRequest;
@@ -23,6 +24,9 @@ public class AuthServiceImpl implements AuthService{
     private final UserService userService;
     private final UserCredentialRepository credentialRepository;
 
+    // Injecting the PasswordEncoder bean
+    private final PasswordEncoder passwordEncoder;
+
     @Override
     public AuthResponse signup(SignupRequest request) {
         // TODO: 1. (Future) Check if user exists. If yes, throw exception.
@@ -41,7 +45,10 @@ public class AuthServiceImpl implements AuthService{
 
         UserCredential credential = new UserCredential();
         credential.setUser(userReference);
-        credential.setPasswordHash(request.getPassword()); // TODO: Apply BCrypt hashing here
+
+        // Hash the password before saving
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
+        credential.setPasswordHash(hashedPassword); // TODO: Apply BCrypt hashing here
 
         credentialRepository.save(credential);
 
