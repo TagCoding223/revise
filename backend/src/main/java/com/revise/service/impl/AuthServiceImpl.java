@@ -56,6 +56,7 @@ public class AuthServiceImpl implements AuthService{
 
     @Override
     public AuthResponse login(LoginRequest request) {
+        // Basic flow stub: We will add real validation and JWT generation later
         AuthResponse response = new AuthResponse();
         response.setMessage("Login flow reached for: "+ request.getEmail());
         response.setToken("dummy-jwt-token-for-now");
@@ -64,8 +65,11 @@ public class AuthServiceImpl implements AuthService{
 
     @Override
     public AuthResponse verifyOtp(String email, String otp) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'verifyOtp'");
+        // Basic flow stub
+        AuthResponse response = new AuthResponse();
+        response.setMessage("OTP verified for: "+ email);
+        response.setToken("dummy-jwt-token-for-now");
+        return response;
     }
     
 }
