@@ -139,10 +139,14 @@ public class AuthServiceImpl implements AuthService{
         // 5. Clean up the used OTP
         otpRepository.delete(storedCode);
 
-        // 6. Return success response
+        // 6. Jwt Token generate
+        String token = jwtTokenProvider.generateToken(user.getId());
+
+        // 7. Return success response
         AuthResponse response = new AuthResponse();
         response.setMessage("Email verified successfully!");
-        response.setToken("dummy-jwt-token");
+        response.setToken(token);
+        response.setUserId(user.getId());
         return response;
     }
     
