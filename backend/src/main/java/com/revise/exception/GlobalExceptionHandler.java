@@ -1,4 +1,4 @@
-package com.revise.entity;
+package com.revise.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.revise.dto.response.ApiResponse;
-import com.revise.exception.UserAlreadyExistsException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -18,6 +17,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
+
+    @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse> handleGeneralException(Exception ex){
         ApiResponse response = new ApiResponse(false, "An unexpected error occurred.");
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
