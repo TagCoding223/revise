@@ -122,4 +122,12 @@ public class AuthServiceImpl implements AuthService{
         return response;
     }
     
+    // Method to handle the Resend button on the frontend
+    public AuthResponse resendOtp(String email){
+        otpService.generateAndSendOtp(email);
+
+        AuthResponse response = new AuthResponse();
+        response.setMessage("A new OTP has been sent to your email.");
+        return response;
+    }
 }
