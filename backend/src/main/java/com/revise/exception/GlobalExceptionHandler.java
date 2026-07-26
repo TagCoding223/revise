@@ -34,6 +34,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response,HttpStatus.NOT_FOUND); // 404
     }
 
+    // Handle bad password (UnauthorizedException)
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiResponse> handleUnauthorizedException(UnauthorizedException ex){
+        ApiResponse response = new ApiResponse(false, ex.getMessage());
+        return new ResponseEntity<>(response,HttpStatus.UNAUTHORIZED); //401
+    }
+
     // Keep this at the bottom to catch actual server crashes
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse> handleGeneralException(Exception ex){
