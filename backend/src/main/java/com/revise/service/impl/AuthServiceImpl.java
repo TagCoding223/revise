@@ -50,6 +50,7 @@ public class AuthServiceImpl implements AuthService{
 
     @Override
     @Transactional
+    // TODO: Add Validation for form data like password should be 8 for signup and login
     public AuthResponse signup(SignupRequest request) {
         // 1. Check if user exists. If yes, throw exception.
         if(userRepository.existsByEmail(request.getEmail())){
