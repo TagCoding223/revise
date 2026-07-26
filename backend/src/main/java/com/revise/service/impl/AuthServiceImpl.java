@@ -123,6 +123,7 @@ public class AuthServiceImpl implements AuthService{
     }
     
     // Method to handle the Resend button on the frontend
+    @Override
     public AuthResponse resendOtp(String email){
         otpService.generateAndSendOtp(email);
 

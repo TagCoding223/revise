@@ -8,4 +8,5 @@ public interface AuthService {
     AuthResponse signup(SignupRequest request);
     AuthResponse login(LoginRequest request);
     AuthResponse verifyOtp(String email, String otp);
+    AuthResponse resendOtp(String email);
 }

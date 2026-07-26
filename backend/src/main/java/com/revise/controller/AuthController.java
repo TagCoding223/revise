@@ -37,5 +37,10 @@ public class AuthController {
         return ResponseEntity.ok(authService.verifyOtp(email, otp));
     }
     
+    // Endpoint for the Resend button on our frontend OtpVerify.jsx
+    @PostMapping("/resend-otp")
+    public ResponseEntity<AuthResponse> resendOtpEntity(@RequestParam String email) {
+        return ResponseEntity.ok(authService.resendOtp(email));
+    }
     
 }
