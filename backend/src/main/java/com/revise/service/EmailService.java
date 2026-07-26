@@ -16,17 +16,17 @@ public class EmailService {
     private final String fromEmail;
 
     // Injects the key from application.properties
-    public EmailService(@Value("${resend.api.key}") String apiKey, @Value("${from.email.address}") String fromEmail){
+    public EmailService(@Value("${resend.api.key}") String apiKey, @Value("${resend.from.email}") String fromEmail){
         this.resend = new Resend(apiKey);
         this.fromEmail = fromEmail;
     }
 
     public void sendOtpEmail(String toEmail, String otpCode){
         CreateEmailOptions sendEmailRequest = CreateEmailOptions.builder()
-        .from("Revise App "+fromEmail) // Use your verified Resend domain in production
+        .from(fromEmail) // Use your verified Resend domain in production
         .to(toEmail)
         .subject("Your Revise Verification Code")
-        .html("<h2>Welcome to Revise!</h2><p>Your 4-digit verification code is: <strong>"+otpCode+"</strong></p><p>This code will expire in 10 minutes.</p>")
+        .html("<h2>Welcome to Revise!</h2><p>Your 4-digit verification code is: <strong>"+otpCode+"</strong></p><p>This code will expire in 2 minutes.</p>")
         .build();
 
         try {
