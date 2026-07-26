@@ -4,17 +4,30 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.revise.security.JwtAuthenticationFilter;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    // Inject the Jwt filter
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         http
         // Disable CSRF (Cross-Site Request Forgery) since we are building a stateless REST API
         .csrf(csrf -> csrf.disable())
+
+        // Set session management to stateless (no server-side cookies)
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
         // Configure route access rules
         .authorizeHttpRequests(auth -> auth
@@ -25,6 +38,9 @@ public class SecurityConfig {
             // Any other request must be authenticated
             .anyRequest().authenticated()
         );
+
+        // Inject the JWT filter Before the standard UsernamePassword filter 
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
