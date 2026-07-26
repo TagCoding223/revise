@@ -28,6 +28,7 @@ public class GlobalExceptionHandler {
     }
 
     // Handle missing records (User or OTP)
+    @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse> handleResourceNotFound(ResourceNotFoundException ex){
         ApiResponse response = new ApiResponse(false, ex.getMessage());
         return new ResponseEntity<>(response,HttpStatus.NOT_FOUND); // 404
