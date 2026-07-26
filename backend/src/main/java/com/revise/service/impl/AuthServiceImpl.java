@@ -1,5 +1,7 @@
 package com.revise.service.impl;
 
+import java.time.LocalDateTime;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +13,9 @@ import com.revise.dto.response.AuthResponse;
 import com.revise.dto.response.UserResponse;
 import com.revise.entity.User;
 import com.revise.entity.UserCredential;
+import com.revise.entity.VerificationCode;
+import com.revise.exception.InvalidOtpException;
+import com.revise.exception.ResourceNotFoundException;
 import com.revise.exception.UserAlreadyExistsException;
 import com.revise.repository.UserCredentialRepository;
 import com.revise.repository.UserRepository;
@@ -88,10 +93,32 @@ public class AuthServiceImpl implements AuthService{
 
     @Override
     public AuthResponse verifyOtp(String email, String otp) {
-        // Basic flow stub
+        // 1. Fetch the OTP record (Throws 404 if missing)
+        VerificationCode storedCode = otpRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("No active OTP found for this email."));
+
+        // 2. Check expiration (Throw 400 if expired)
+        if(storedCode.getExpiresAt().isBefore(LocalDateTime.now())){
+            throw new InvalidOtpException("Your OTP has expired. Please request a new one.");
+        }
+
+        // 3. Check if the code matches (Throws 400 if wrong)
+        if (!storedCode.getCode().equals(otp)) {
+            throw new InvalidOtpException("Invalid verification code. Please try again.");
+        }
+
+        // 4. Mark user as verified (Throws 404 if user somehow vanished)
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found in the system."));
+
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        // 5. Clean up the used OTP
+        otpRepository.delete(storedCode);
+
+        // 6. Return success response
         AuthResponse response = new AuthResponse();
-        response.setMessage("OTP verified for: "+ email);
-        response.setToken("dummy-jwt-token-for-now");
+        response.setMessage("Email verified successfully!");
+        response.setToken("dummy-jwt-token");
         return response;
     }
     
