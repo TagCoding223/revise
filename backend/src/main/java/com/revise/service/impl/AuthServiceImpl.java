@@ -16,10 +16,12 @@ import com.revise.entity.UserCredential;
 import com.revise.entity.VerificationCode;
 import com.revise.exception.InvalidOtpException;
 import com.revise.exception.ResourceNotFoundException;
+import com.revise.exception.UnauthorizedException;
 import com.revise.exception.UserAlreadyExistsException;
 import com.revise.repository.UserCredentialRepository;
 import com.revise.repository.UserRepository;
 import com.revise.repository.VerificationCodeRepository;
+import com.revise.security.JwtTokenProvider;
 import com.revise.service.AuthService;
 import com.revise.service.OtpService;
 import com.revise.service.UserService;
@@ -42,6 +44,9 @@ public class AuthServiceImpl implements AuthService{
 
     private final OtpService otpService;
     private final VerificationCodeRepository otpRepository;
+
+    // Inject the JWT provider
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     @Transactional
@@ -84,10 +89,29 @@ public class AuthServiceImpl implements AuthService{
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        // Basic flow stub: We will add real validation and JWT generation later
+        // 1. Fetch user by email
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new ResourceNotFoundException("No account found with this email."));
+
+        // 2. Ensure they verified their email
+        if(!user.isEmailVerified()){
+            throw new UnauthorizedException("Please verify your email before logging in.");
+        }
+
+        // 3. Fetch credentials and verify password
+        UserCredential credential = credentialRepository.findById(user.getId()).orElseThrow(() -> new ResourceNotFoundException("Credentials missing."));
+
+        if(!passwordEncoder.matches(request.getPassword(), credential.getPasswordHash())){
+            throw new UnauthorizedException("Incorrect password.");
+        }
+
+        // 4. Generate Jwt token
+        String token = jwtTokenProvider.generateToken(user.getId());
+
+        // 5. Return the payload
         AuthResponse response = new AuthResponse();
-        response.setMessage("Login flow reached for: "+ request.getEmail());
-        response.setToken("dummy-jwt-token-for-now");
+        response.setMessage("Login successful.");
+        response.setToken(token);
+        response.setUserId(user.getId());
         return response;
     }
 
