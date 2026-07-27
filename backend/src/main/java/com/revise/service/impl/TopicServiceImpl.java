@@ -3,6 +3,7 @@ package com.revise.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,8 +68,7 @@ public class TopicServiceImpl implements TopicService{
 
     @Override
     public List<TopicResponse> getAllTopicForUser(String userId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAllTopicForUser'");
+        return topicRepository.findAllByUserId(userId).stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
     @Override
