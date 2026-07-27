@@ -2,11 +2,37 @@ package com.revise.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.revise.dto.request.TopicRequest;
+import com.revise.dto.response.TopicResponse;
+import com.revise.service.TopicService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+import java.security.Principal;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 
 @RestController
-@RequestMapping("/topic")
+@RequestMapping("/api/v1/topics")
+@RequiredArgsConstructor
 public class TopicController {
+
+    private final TopicService topicService;
+
+    @PostMapping
+    public ResponseEntity<TopicResponse> createTopic(@Valid @RequestBody TopicRequest request, Principal principal) {
+        // principal.getName() securely returns the userId from the JWT token
+        TopicResponse createdTopic = topicService.createTopic(request, principal.getName());
+        return new ResponseEntity<>(createdTopic, HttpStatus.CREATED);
+    }
+    
     
     @GetMapping("/testSecureRoute")
     public String test() {
