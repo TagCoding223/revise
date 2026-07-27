@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+// TODO: Unnecessary endpoint other services perform same task and we have zero scenerio to hit that endpoints directly so remove it and also remove CreateUserRequest, that a the messavie valuerbility of application so if we want to use them for user service like update profile then we need to redesign the complete endpoint.
 @RestController
 @RequestMapping("/api/v1/user")
 @RequiredArgsConstructor // what is done and how it is allow to access userServiceImpl class method to link with final userService field

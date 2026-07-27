@@ -2,12 +2,13 @@ package com.revise.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-
+import java.util.stream.Collectors;
 import com.revise.dto.response.ApiResponse;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 @Slf4j
@@ -47,5 +48,17 @@ public class GlobalExceptionHandler {
         log.error(ex.getMessage(), ex);
         ApiResponse response = new ApiResponse(false, "An unexpected internal server error occurred.");
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR); // 500
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse> handleValidationExceptions(MethodArgumentNotValidException ex){
+        // Extract all the default messages we wrote in the DTO and join them into a single string
+        String errorMessage = ex.getBindingResult().getFieldErrors().stream().map(FieldError::getDefaultMessage).collect(Collectors.joining(" | "));
+
+        // Wrap it in our standard ApiResponse format
+        ApiResponse response = new ApiResponse(false, errorMessage);
+
+        // Return 400 Bad Request
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 }
