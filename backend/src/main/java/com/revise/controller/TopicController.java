@@ -17,6 +17,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
 
 
 @RestController
@@ -33,6 +36,10 @@ public class TopicController {
         return new ResponseEntity<>(createdTopic, HttpStatus.CREATED);
     }
     
+    @PutMapping("/{id}")
+    public ResponseEntity<TopicResponse> updateTopic(@PathVariable String id, @Valid @RequestBody TopicRequest request, Principal principal) {
+        return ResponseEntity.ok(topicService.updateTopic(id, request, principal.getName()));
+    }
     
     @GetMapping("/testSecureRoute")
     public String test() {

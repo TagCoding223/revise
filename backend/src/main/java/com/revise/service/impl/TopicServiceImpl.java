@@ -47,9 +47,16 @@ public class TopicServiceImpl implements TopicService{
     }
 
     @Override
+    @Transactional
     public TopicResponse updateTopic(String topicId, TopicRequest request, String userId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateTopic'");
+        RevisionTopic topic = getTopicEntityOwnedByUser(topicId, userId);
+
+        topic.setTitle(request.getTitle());
+        topic.setDescription(request.getDescription());
+        topic.setLinks(request.getLinks());
+
+        RevisionTopic updatedTopic = topicRepository.save(topic);
+        return mapToResponse(updatedTopic);
     }
 
     @Override
@@ -76,6 +83,24 @@ public class TopicServiceImpl implements TopicService{
         throw new UnsupportedOperationException("Unimplemented method 'markTopicAsRevised'");
     }
     
+    // --- Helper Methods ---
+
+    /**
+     * Ensures that a topic exists AND belongs to the requesting user.
+     * This is a critical security measure to prevent ID-guessing attacks.
+     */
+    private RevisionTopic getTopicEntityOwnedByUser(String topicId, String userId){
+        RevisionTopic topic = topicRepository.findById(topicId).orElseThrow(() -> new ResourceNotFoundException("Topic not found"));
+
+        if (!topic.getUser().getId().equals(userId)) {
+            // Reusing ResourceNotFound instead of Unauthorized prevents attackers from knowing if an ID exists but belongs to someone else.
+
+            throw new ResourceNotFoundException("Topic not found");
+        }
+        return topic;
+    }
+
+
     /**
      * Maps the database Entity to the DTO needed by the React frontend.
      * It dynamically calculates the category ('today', 'tomorrow', 'other') 
