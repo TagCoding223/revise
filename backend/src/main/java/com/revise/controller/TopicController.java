@@ -20,8 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-
-
 @RestController
 @RequestMapping("/api/v1/topics")
 @RequiredArgsConstructor
@@ -40,6 +38,12 @@ public class TopicController {
     public ResponseEntity<TopicResponse> updateTopic(@PathVariable String id, @Valid @RequestBody TopicRequest request, Principal principal) {
         return ResponseEntity.ok(topicService.updateTopic(id, request, principal.getName()));
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TopicResponse> getTopicById(@PathVariable String id, Principal principal) {
+        return ResponseEntity.ok(topicService.getTopicById(id, principal.getName()));
+    }
+    
     
     @GetMapping("/testSecureRoute")
     public String test() {

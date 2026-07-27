@@ -61,8 +61,8 @@ public class TopicServiceImpl implements TopicService{
 
     @Override
     public TopicResponse getTopicById(String topicId, String userId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getTopicById'");
+        RevisionTopic topic = getTopicEntityOwnedByUser(topicId, userId);
+        return mapToResponse(topic);
     }
 
     @Override
