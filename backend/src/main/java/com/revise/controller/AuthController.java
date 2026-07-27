@@ -9,6 +9,7 @@ import com.revise.dto.request.SignupRequest;
 import com.revise.dto.response.AuthResponse;
 import com.revise.service.AuthService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -23,12 +24,12 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<AuthResponse> signup(@RequestBody SignupRequest request) {
+    public ResponseEntity<AuthResponse> signup(@Valid @RequestBody SignupRequest request) {
         return ResponseEntity.ok(authService.signup(request));
     }
     
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
@@ -39,7 +40,7 @@ public class AuthController {
     
     // Endpoint for the Resend button on our frontend OtpVerify.jsx
     @PostMapping("/resend-otp")
-    public ResponseEntity<AuthResponse> resendOtpEntity(@RequestParam String email) {
+    public ResponseEntity<AuthResponse> resendOtp(@RequestParam String email) {
         return ResponseEntity.ok(authService.resendOtp(email));
     }
     
