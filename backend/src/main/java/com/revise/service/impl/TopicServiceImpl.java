@@ -72,9 +72,11 @@ public class TopicServiceImpl implements TopicService{
     }
 
     @Override
+    @Transactional
     public ApiResponse deleteTopic(String topicId, String userId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'deleteTopic'");
+        RevisionTopic topic = getTopicEntityOwnedByUser(topicId, userId);
+        topicRepository.delete(topic);
+        return new ApiResponse(true, "Topic deleted successfully.");
     }
 
     @Override
