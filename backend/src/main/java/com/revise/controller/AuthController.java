@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.revise.dto.request.GoogleAuthRequest;
 import com.revise.dto.request.LoginRequest;
 import com.revise.dto.request.SignupRequest;
 import com.revise.dto.response.AuthResponse;
@@ -44,4 +45,8 @@ public class AuthController {
         return ResponseEntity.ok(authService.resendOtp(email));
     }
     
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> googleAuth(@Valid @RequestBody GoogleAuthRequest request) {
+        return ResponseEntity.ok(authService.googleAuth(request));
+    }
 }

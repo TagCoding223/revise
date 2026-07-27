@@ -1,12 +1,20 @@
 package com.revise.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.revise.dto.request.CreateUserRequest;
+import com.revise.dto.request.GoogleAuthRequest;
 import com.revise.dto.request.LoginRequest;
 import com.revise.dto.request.SignupRequest;
 import com.revise.dto.response.AuthResponse;
@@ -31,6 +39,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService{
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String googleClientId;
 
     // Injecting UserService to handle the profile side of things
     private final UserService userService;
@@ -159,5 +170,69 @@ public class AuthServiceImpl implements AuthService{
         AuthResponse response = new AuthResponse();
         response.setMessage("A new OTP has been sent to your email.");
         return response;
+    }
+
+    @Override
+    public AuthResponse googleAuth(GoogleAuthRequest request) {
+        try {
+            // 1. Initialize the Google Token Verifier
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                new NetHttpTransport(), new GsonFactory()
+            ).setAudience(Collections.singletonList(googleClientId)).build();
+
+            // 2. Verify the token provided by the frontend
+            GoogleIdToken idToken = verifier.verify(request.getIdToken());
+
+            if (idToken == null) {
+                throw new UnauthorizedException("Invalid Google ID Token.");
+            }
+
+            // 3. Extract user payload from the Google Token
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+
+            // 4. Check if user already exists in our database
+            Optional<User> existingUserOpt = userRepository.findByEmail(email);
+            User user;
+
+            if(existingUserOpt.isPresent()){
+                user = existingUserOpt.get();
+                // Optional: If they previously signed up with LOCAL, you might want to update their auth provider to "GOOGLE" or handle linking accounts here.
+                user.setAuthProvider("GOOGLE");
+                user.setEmailVerified(true); // Google emails are implicitly verified
+                userRepository.save(user);
+            } else{
+                // 5. Create a new user if they don't exist
+                CreateUserRequest userReq = new CreateUserRequest();
+                userReq.setEmail(email);
+                userReq.setFullName(name);
+                userReq.setAuthProvider("GOOGLE"); // Mark as Google user
+
+                UserResponse createdUserResponse = userService.createUser(userReq);
+
+                // Fetch the newly created entity so we can mark it as verified
+                user = userRepository.findById(createdUserResponse.getId())
+                        .orElseThrow(() -> new RuntimeException("Failed to retrieve created user"));
+                
+                user.setEmailVerified(true);
+                userRepository.save(user);
+                
+                // Note: We DO NOT create a UserCredential row here, because Google users don't have a local password to hash.
+            }
+
+            // 6. Generate our custom JWT for the React frontend
+            String jwt = jwtTokenProvider.generateToken(user.getId());
+
+            // 7. Return the standard auth response
+            AuthResponse response = new AuthResponse();
+            response.setMessage("Google authentication successful.");
+            response.setToken(jwt);
+            response.setUserId(user.getId());
+            return response;
+        } catch (Exception e) {
+            // If the token is expired, tampered with, or network fails
+            throw new UnauthorizedException("Google authentication failed: " + e.getMessage());
+        }
     }
 }
