@@ -22,11 +22,11 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class TopicServiceImpl implements TopicService{
-    
+public class TopicServiceImpl implements TopicService {
+
     private final TopicRepository topicRepository;
     private final UserRepository userRepository;
-    
+
     @Override
     @Transactional
     public TopicResponse createTopic(TopicRequest request, String userId) {
@@ -81,34 +81,63 @@ public class TopicServiceImpl implements TopicService{
 
     @Override
     public TopicResponse markTopicAsRevised(String topicId, String userId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'markTopicAsRevised'");
+        RevisionTopic topic = getTopicEntityOwnedByUser(topicId, userId);
+
+        // Update the stage
+        int currentStage = topic.getStage();
+        topic.setStage(currentStage + 1);
+
+        // Record exactly when they revised it
+        topic.setLastRevisionDate(LocalDateTime.now());
+
+        // Calculate the next revision date based on the new stage
+        int daysToAdd = calculateSpaceRepetitionInterval(topic.getStage());
+        topic.setNextRevisionDate(LocalDateTime.now().plusDays(daysToAdd));
+
+        RevisionTopic updatedTopic = topicRepository.save(topic);
+        return mapToResponse(updatedTopic);
     }
-    
+
     // --- Helper Methods ---
 
     /**
      * Ensures that a topic exists AND belongs to the requesting user.
      * This is a critical security measure to prevent ID-guessing attacks.
      */
-    private RevisionTopic getTopicEntityOwnedByUser(String topicId, String userId){
-        RevisionTopic topic = topicRepository.findById(topicId).orElseThrow(() -> new ResourceNotFoundException("Topic not found"));
+    private RevisionTopic getTopicEntityOwnedByUser(String topicId, String userId) {
+        RevisionTopic topic = topicRepository.findById(topicId)
+                .orElseThrow(() -> new ResourceNotFoundException("Topic not found"));
 
         if (!topic.getUser().getId().equals(userId)) {
-            // Reusing ResourceNotFound instead of Unauthorized prevents attackers from knowing if an ID exists but belongs to someone else.
+            // Reusing ResourceNotFound instead of Unauthorized prevents attackers from
+            // knowing if an ID exists but belongs to someone else.
 
             throw new ResourceNotFoundException("Topic not found");
         }
         return topic;
     }
 
+    /**
+     * Spaced Repetition Algorithm.
+     * Determines how many days to wait before showing the topic again.
+     */
+    private int calculateSpaceRepetitionInterval(int stage){
+        return switch (stage) {
+            case 1 -> 1;// Revisit next day
+            case 2 -> 3;  // Revisit in 3 days
+            case 3 -> 7;  // Revisit in 1 week
+            case 4 -> 14; // Revisit in 2 weeks
+            case 5 -> 30; // Revisit in 1 month
+            default -> 60; // Max out at 2 months for deeply learned concepts
+        };
+    }
 
     /**
      * Maps the database Entity to the DTO needed by the React frontend.
-     * It dynamically calculates the category ('today', 'tomorrow', 'other') 
+     * It dynamically calculates the category ('today', 'tomorrow', 'other')
      * based on the exact current date so your dashboard always sorts correctly.
      */
-    private TopicResponse mapToResponse(RevisionTopic topic){
+    private TopicResponse mapToResponse(RevisionTopic topic) {
         TopicResponse response = new TopicResponse();
         response.setId(topic.getId());
         response.setTitle(topic.getTitle());
@@ -122,11 +151,11 @@ public class TopicServiceImpl implements TopicService{
         LocalDate today = LocalDate.now();
         LocalDate targetDate = topic.getNextRevisionDate().toLocalDate();
 
-        if(targetDate.isBefore(today) || targetDate.isEqual(today)){
+        if (targetDate.isBefore(today) || targetDate.isEqual(today)) {
             response.setCategory("today"); // Overdue or due today
-        }else if (targetDate.isEqual(today.plusDays(1))){
+        } else if (targetDate.isEqual(today.plusDays(1))) {
             response.setCategory("tomorrow");
-        }else{
+        } else {
             response.setCategory("other");
         }
 
