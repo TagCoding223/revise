@@ -1,17 +1,26 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ children }) {
   const { user } = useAuth();
+  const location = useLocation();
 
-  // If there is no authenticated user, redirect to the login page.
-  // The 'replace' prop ensures this redirect doesn't add a meaningless entry 
-  // to the browser's history stack, so the user's "Back" button works correctly.
+  // 1. Not logged in? Go to login.
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // If the user exists, render the protected component
+  // 2. Logged in, but is a NEW user trying to access the dashboard? Force them to set password.
+  if (user.newUser && location.pathname !== '/set-password') {
+    return <Navigate to="/set-password" replace />;
+  }
+
+  // 3. Logged in, ALREADY set password, but trying to access set-password page? Force to dashboard.
+  if (!user.newUser && location.pathname === '/set-password') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // 4. Otherwise, render the requested page
   return children;
 }

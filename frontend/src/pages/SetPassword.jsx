@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import axios from 'axios'
+import { useAuth } from '../context/AuthContext';
 
 // --- Zod Validation Schema ---
 const setPasswordSchema = z.object({
@@ -26,6 +27,8 @@ export default function SetPassword() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
+  const { markPasswordSet } = useAuth();
+
   const {
     register,
     handleSubmit,
@@ -40,6 +43,9 @@ export default function SetPassword() {
       await axios.post(`${BACKEND_BASE_URL}/api/v1/user/set-password`, { 
         password: data.password 
       });
+
+      // Clear the flag from context and local storage!
+      markPasswordSet();
       
       // On success, redirect to dashboard to start studying
       navigate('/dashboard');
