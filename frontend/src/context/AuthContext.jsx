@@ -9,40 +9,50 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Run once when the app loads to check if a valid session exists
+  // Run once when the app loads to restore the session
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        // MOCK API CALL: Replace this with your actual Axios/Fetch call to your Spring Boot /me endpoint
-        // const response = await axios.get('/api/v1/auth/me');
-        // setUser(response.data);
+    const initializeSession = () => {
+      const storedToken = localStorage.getItem('jwt_token');
+      const storedUserId = localStorage.getItem('user_id');
+
+      if (storedToken && storedUserId) {
+        // Attach the token to Axios defaults so all future requests are authenticated
+        axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
         
-        // Simulating a network delay for now
-        await new Promise(resolve => setTimeout(resolve, 500)); 
-        setUser(null); // Assuming no user is logged in on initial bare load
-      } catch (error) {
-        // If 401 Unauthorized, ensure user state is clear
-        setUser(null);
-      } finally {
-        setLoading(false);
+        // Restore user state
+        setUser({ token: storedToken, userId: storedUserId });
       }
+      
+      setLoading(false);
     };
 
-    checkSession();
+    initializeSession();
   }, []);
 
-  // Call this function when the user submits the login form successfully
+  // Called from Auth.jsx when login/google-auth is successful
   const login = (userData) => {
+    // 1. Save to localStorage so the session survives browser refreshes
+    localStorage.setItem('jwt_token', userData.token);
+    localStorage.setItem('user_id', userData.userId);
+    
+    // 2. Attach the token to Axios globally
+    axios.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`;
+    
+    // 3. Update React state
     setUser(userData);
   };
 
-  // Call this function when the user clicks Logout in the Navbar
-  const logout = async () => {
-    try {
-      // Optional: Hit your backend to invalidate the token/cookie
-      // await axios.post('/api/v1/auth/logout');
-    } finally {
-      setUser(null);
-    }
+  // Called from the Navbar when the user clicks Logout
+  const logout = () => {
+    // 1. Wipe localStorage
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('user_id');
+    
+    // 2. Remove the Axios authorization header
+    delete axios.defaults.headers.common['Authorization'];
+    
+    // 3. Clear React state
+    setUser(null);
   };
 
   return (

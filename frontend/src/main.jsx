@@ -8,21 +8,18 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import { HelmetProvider } from 'react-helmet-async';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
-// Use the exact same Client ID we put in your Spring Boot application.properties
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_KEY
-
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <GoogleOAuthProvider clientId='{GOOGLE_CLIENT_ID}'>
+  createRoot(document.getElementById('root')).render(
+    <StrictMode>
       <HelmetProvider>
-        <BrowserRouter>
-          <ThemeProvider>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
-          </ThemeProvider>
-        </BrowserRouter>
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_KEY}>
+          <BrowserRouter>
+            <ThemeProvider>
+              <AuthProvider>
+                <App />
+              </AuthProvider>
+            </ThemeProvider>
+          </BrowserRouter>
+        </GoogleOAuthProvider>
       </HelmetProvider>
-    </GoogleOAuthProvider>
-  </StrictMode>,
-)
+    </StrictMode>,
+  )
