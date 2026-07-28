@@ -105,8 +105,12 @@ export default function Auth() {
       // Save the session in the global AuthContext
       login(response.data);
 
-      // Redirect to the protected dashboard
-      navigate('/dashboard');
+      // Route based on user status and Redirect to the protected dashboard or set-password
+      if (response.data.newUser) {
+        navigate('/set-password');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error("Google authentication failed", error);
       setAuthError(error.response?.data?.message || 'Google authentication failed.');
