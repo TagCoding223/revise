@@ -102,11 +102,13 @@ export default function Auth() {
       // Send the token to your Spring Boot endpoint
       const response = await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/google`, { idToken });
 
+      console.log("Backend Auth Response:", response.data);
+
       // Save the session in the global AuthContext
       login(response.data);
 
       // Route based on user status and Redirect to the protected dashboard or set-password
-      if (response.data.newUser) {
+      if (response.data.newUser === true) {
         navigate('/set-password');
       } else {
         navigate('/dashboard');
