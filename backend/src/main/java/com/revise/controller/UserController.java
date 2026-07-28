@@ -3,10 +3,16 @@ package com.revise.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.revise.dto.request.CreateUserRequest;
+import com.revise.dto.request.SetPasswordRequest;
+import com.revise.dto.response.ApiResponse;
 import com.revise.dto.response.UserResponse;
+import com.revise.exception.UnauthorizedException;
 import com.revise.service.UserService;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.security.Principal;
 import java.util.List;
 
 import org.springframework.http.CacheControl;
@@ -17,7 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-// TODO: Unnecessary endpoint other services perform same task and we have zero scenerio to hit that endpoints directly so remove it and also remove CreateUserRequest, that a the messavie valuerbility of application so if we want to use them for user service like update profile then we need to redesign the complete endpoint.
+// block all endpoints except set-password endpoint
 @RestController
 @RequestMapping("/api/v1/user")
 @RequiredArgsConstructor // what is done and how it is allow to access userServiceImpl class method to link with final userService field
@@ -43,11 +49,21 @@ public class UserController {
         return ResponseEntity.ok().cacheControl(cacheRules).body(userService.getUserById(id));
     }
     
-    // TODO: Remove or prevent to access this endpoint by normal user and public.
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         // Define the Cache-Control rule
         CacheControl cacheRules = CacheControl.noStore();
         return ResponseEntity.ok().cacheControl(cacheRules).body(userService.getAllUsers());
     }
+
+    @PostMapping("/set-password")
+    public ResponseEntity<ApiResponse> setPassword(@Valid @RequestBody SetPasswordRequest request, Principal principal) {
+        // Security check: Ensure the request contains a valid JWT
+        if (principal == null) {
+            throw new UnauthorizedException("Authentication required to set password");
+        }
+        
+        return ResponseEntity.ok(userService.setPassword(principal.getName(), request.getPassword()));
+    }
+    
 }

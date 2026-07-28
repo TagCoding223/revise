@@ -39,12 +39,12 @@ public class SecurityConfig {
         // Set session management to stateless (no server-side cookies)
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-        // Configure route access rules
+        // Configure route access rules, In Spring Security, the first matching rule wins.
         .authorizeHttpRequests(auth -> auth
             // Whitelist our authentication and user creation endpoints so anyone can access them
             .requestMatchers("/api/v1/auth/**").permitAll()
-            .requestMatchers("/api/v1/user/**").permitAll()
-
+            .requestMatchers("/api/v1/user/set-password").authenticated()
+            .requestMatchers("/api/v1/user/**").denyAll()
             // Any other request must be authenticated
             .anyRequest().authenticated()
         );
