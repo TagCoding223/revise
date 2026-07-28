@@ -234,6 +234,7 @@ export default function Auth() {
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
                   theme="outline"
+                  useOneTap // Optional: Prompts users immediately if they are already logged into Google in their browser
                   size="large"
                   text="signin_with"
                   width="100%"
@@ -339,6 +340,7 @@ export default function Auth() {
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
                   theme="outline"
+                  useOneTap // Optional: Prompts users immediately if they are already logged into Google in their browser
                   size="large"
                   text="signup_with"
                   width="100%"
