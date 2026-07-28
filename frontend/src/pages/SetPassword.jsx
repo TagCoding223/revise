@@ -18,6 +18,8 @@ const setPasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '';
+
 export default function SetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,14 +36,12 @@ export default function SetPassword() {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      console.log("Setting new password...");
-      // MOCK API CALL: Replace with your actual Spring Boot endpoint
-      // await axios.post('/api/v1/auth/set-password', { password: data.password });
+      await axios.post(`${BACKEND_BASE_URL}/api/v1/users/set-password`, { 
+        password: data.password 
+      });
       
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
-      
-      // On success, redirect to login so they can authenticate with their new credentials
-      navigate('/login');
+      // On success, redirect to dashboard to start studying
+      navigate('/dashboard');
     } catch (error) {
       console.error('Failed to set password', error);
     } finally {
