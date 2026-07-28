@@ -1,57 +1,68 @@
 package com.revise.config;
 
+import com.revise.security.JwtAuthenticationEntryPoint;
+import com.revise.security.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.revise.security.JwtAuthenticationEntryPoint;
-import com.revise.security.JwtAuthenticationFilter;
-
-import lombok.RequiredArgsConstructor;
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    // Inject the Jwt filter
+    @Value("${frontend.base.url}")
+    private String FRONTEND_BASE_URL;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    // Inject the Jwt entry point
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-        // Disable CSRF (Cross-Site Request Forgery) since we are building a stateless REST API
-        .csrf(csrf -> csrf.disable())
+            // 1. Tell Spring Security to explicitly use the CORS configuration bean below
+            .cors(Customizer.withDefaults()) 
+            .csrf(csrf -> csrf.disable())
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+            )
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/v1/auth/**").permitAll()
+                // All other endpoints (including set-password) require authentication
+                .anyRequest().authenticated() 
+            );
 
-        // Add exception handling to route unauthenticated errors to our custom entry point
-
-        .exceptionHandling(exception -> exception
-            .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-        )
-
-        // Set session management to stateless (no server-side cookies)
-        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-        // Configure route access rules, In Spring Security, the first matching rule wins.
-        .authorizeHttpRequests(auth -> auth
-            // Whitelist our authentication and user creation endpoints so anyone can access them
-            .requestMatchers("/api/v1/auth/**").permitAll()
-            .requestMatchers("/api/v1/user/set-password").authenticated()
-            .requestMatchers("/api/v1/user/**").denyAll()
-            // Any other request must be authenticated
-            .anyRequest().authenticated()
-        );
-
-        // Inject the JWT filter Before the standard UsernamePassword filter 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    // 2. Define the exact CORS rules directly for Spring Security
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList(FRONTEND_BASE_URL));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        
+        // You MUST explicitly allow the Authorization header
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+        configuration.setAllowCredentials(true);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }

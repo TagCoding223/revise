@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import axios from 'axios'
 
 // --- Zod Validation Schema ---
 const setPasswordSchema = z.object({
@@ -36,7 +37,7 @@ export default function SetPassword() {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      await axios.post(`${BACKEND_BASE_URL}/api/v1/users/set-password`, { 
+      await axios.post(`${BACKEND_BASE_URL}/api/v1/user/set-password`, { 
         password: data.password 
       });
       
