@@ -3,11 +3,17 @@ package com.revise.service.impl;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.revise.dto.request.CreateUserRequest;
+import com.revise.dto.response.ApiResponse;
 import com.revise.dto.response.UserResponse;
 import com.revise.entity.User;
+import com.revise.entity.UserCredential;
+import com.revise.exception.ResourceNotFoundException;
+import com.revise.repository.UserCredentialRepository;
 import com.revise.repository.UserRepository;
 import com.revise.service.UserService;
 
@@ -21,6 +27,8 @@ import lombok.RequiredArgsConstructor;
 public class DefaultUserService implements UserService{
 
     private final UserRepository userRepository;
+    private final UserCredentialRepository credentialRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserResponse createUser(CreateUserRequest request) {
@@ -58,5 +66,24 @@ public class DefaultUserService implements UserService{
         response.setAuthProvider(user.getAuthProvider());
         response.setCreatedAt(user.getCreatedAt());
         return response;
+    }
+
+    @Override
+    @Transactional
+    public ApiResponse setPassword(String userId, String rawPassword) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Fetch existing credentials or create a new row if they don't have one (like Google users)
+        UserCredential credential = credentialRepository.findById(userId)
+                .orElse(new UserCredential());
+                
+        if (credential.getUser() == null) {
+            credential.setUser(user);
+        }
+
+        credential.setPasswordHash(passwordEncoder.encode(rawPassword));
+        credentialRepository.save(credential);
+
+        return new ApiResponse(true, "Password set successfully.");
     }
 }
