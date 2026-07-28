@@ -5,6 +5,9 @@ import lombok.Data;
 @Data
 public class AuthResponse {
     private String message;
-    private String token; // We will populate this with a JWT later
+    private String token; 
     private String userId;
+
+    // Identifies if the user was just created in the database
+    private boolean newUser; // by default false
 }
