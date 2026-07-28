@@ -30,8 +30,9 @@ const signupSchema = z.object({
 export default function Auth() {
   const location = useLocation();
   const navigate = useNavigate();
-  const {login} = useAuth;
   
+  const { login } = useAuth();
+
   // Tabs state tracking
   const isLoginRoute = location.pathname === '/login';
   const [activeTab, setActiveTab] = useState(isLoginRoute ? 'login' : 'signup');
@@ -97,13 +98,13 @@ export default function Auth() {
       setAuthError('');
       // Extract the ID token from the response
       const idToken = credentialResponse.credential;
-      
+
       // Send the token to your Spring Boot endpoint
       const response = await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/google`, { idToken });
-      
+
       // Save the session in the global AuthContext
       login(response.data);
-      
+
       // Redirect to the protected dashboard
       navigate('/dashboard');
     } catch (error) {
@@ -119,33 +120,31 @@ export default function Auth() {
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 transition-colors duration-300">
-        
+
         {/* Tab Headers */}
         <div className="flex w-full border-b border-gray-200 dark:border-gray-700 relative">
           <button
             type="button"
             onClick={() => handleTabSwitch('login')}
-            className={`flex-1 py-4 text-center font-semibold text-sm transition-colors duration-300 ${
-              activeTab === 'login'
-                ? 'text-blue-600 dark:text-blue-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-            }`}
+            className={`flex-1 py-4 text-center font-semibold text-sm transition-colors duration-300 ${activeTab === 'login'
+              ? 'text-blue-600 dark:text-blue-400'
+              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
           >
             Log In
           </button>
           <button
             type="button"
             onClick={() => handleTabSwitch('signup')}
-            className={`flex-1 py-4 text-center font-semibold text-sm transition-colors duration-300 ${
-              activeTab === 'signup'
-                ? 'text-blue-600 dark:text-blue-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-            }`}
+            className={`flex-1 py-4 text-center font-semibold text-sm transition-colors duration-300 ${activeTab === 'signup'
+              ? 'text-blue-600 dark:text-blue-400'
+              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
           >
             Sign Up
           </button>
-          
-          <div 
+
+          <div
             className="absolute bottom-0 h-0.5 bg-blue-600 dark:bg-blue-400 transition-all duration-300 ease-in-out w-1/2"
             style={{ left: activeTab === 'login' ? '0%' : '50%' }}
           />
@@ -160,14 +159,13 @@ export default function Auth() {
 
         {/* Content Area */}
         <div className="p-6 sm:p-8 relative min-h-[440px]">
-          
+
           {/* LOGIN FORM */}
-          <div 
-            className={`absolute top-8 left-8 right-8 transition-all duration-500 ease-in-out ${
-              activeTab === 'login' 
-                ? 'opacity-100 translate-x-0 pointer-events-auto z-10' 
-                : 'opacity-0 -translate-x-8 pointer-events-none z-0'
-            }`}
+          <div
+            className={`absolute top-8 left-8 right-8 transition-all duration-500 ease-in-out ${activeTab === 'login'
+              ? 'opacity-100 translate-x-0 pointer-events-auto z-10'
+              : 'opacity-0 -translate-x-8 pointer-events-none z-0'
+              }`}
           >
             <form onSubmit={handleLoginSubmit(onLogin)} className="space-y-5">
               <div>
@@ -227,29 +225,29 @@ export default function Auth() {
                   <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or continue with</span>
                 </div>
               </div>
-              
+
               {/* Official Google OAuth Login Button */}
               <div className="flex justify-center w-full">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  theme="outline"
-                  useOneTap // Optional: Prompts users immediately if they are already logged into Google in their browser
-                  size="large"
-                  text="signin_with"
-                  width="100%"
-                />
+                {activeTab === 'login' && (
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    theme="outline"
+                    size="large"
+                    text="signin_with"
+                    width="320" // Changed from "100%" to a pixel value
+                  />
+                )}
               </div>
             </div>
           </div>
 
           {/* SIGNUP FORM */}
-          <div 
-            className={`transition-all duration-500 ease-in-out ${
-              activeTab === 'signup' 
-                ? 'opacity-100 translate-x-0 pointer-events-auto z-10' 
-                : 'opacity-0 translate-x-8 pointer-events-none z-0 absolute top-8 left-8 right-8'
-            }`}
+          <div
+            className={`transition-all duration-500 ease-in-out ${activeTab === 'signup'
+              ? 'opacity-100 translate-x-0 pointer-events-auto z-10'
+              : 'opacity-0 translate-x-8 pointer-events-none z-0 absolute top-8 left-8 right-8'
+              }`}
           >
             <form onSubmit={handleSignupSubmit(onSignup)} className="space-y-4">
               <div>
@@ -333,18 +331,19 @@ export default function Auth() {
                   <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or sign up with</span>
                 </div>
               </div>
-              
+
               {/* Official Google OAuth Signup Button */}
               <div className="flex justify-center w-full">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  theme="outline"
-                  useOneTap // Optional: Prompts users immediately if they are already logged into Google in their browser
-                  size="large"
-                  text="signup_with"
-                  width="100%"
-                />
+                {activeTab === 'signup' && (
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    theme="outline"
+                    size="large"
+                    text="signup_with"
+                    width="320" // Changed from "100%" to a pixel value
+                  />
+                )}
               </div>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
 const AuthContext = createContext();
 
@@ -9,7 +10,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Run once when the app loads to check if a valid session exists
-  // Run once when the app loads to restore the session
   useEffect(() => {
     const initializeSession = () => {
       const storedToken = localStorage.getItem('jwt_token');
