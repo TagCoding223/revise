@@ -195,6 +195,7 @@ public class AuthServiceImpl implements AuthService{
             // 4. Check if user already exists in our database
             Optional<User> existingUserOpt = userRepository.findByEmail(email);
             User user;
+            boolean isNewUser = false; // Track the user state
 
             if(existingUserOpt.isPresent()){
                 user = existingUserOpt.get();
@@ -219,6 +220,8 @@ public class AuthServiceImpl implements AuthService{
                 userRepository.save(user);
                 
                 // Note: We DO NOT create a UserCredential row here, because Google users don't have a local password to hash.
+
+                isNewUser = true; // Flag them as a new user
             }
 
             // 6. Generate our custom JWT for the React frontend
@@ -229,6 +232,7 @@ public class AuthServiceImpl implements AuthService{
             response.setMessage("Google authentication successful.");
             response.setToken(jwt);
             response.setUserId(user.getId());
+            response.setNewUser(isNewUser);
             return response;
         } catch (Exception e) {
             // If the token is expired, tampered with, or network fails

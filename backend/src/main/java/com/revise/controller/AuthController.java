@@ -46,6 +46,7 @@ public class AuthController {
     }
     
     @PostMapping("/google")
+    // same endpoint use for google auth login and signup and same service also
     public ResponseEntity<AuthResponse> googleAuth(@Valid @RequestBody GoogleAuthRequest request) {
         return ResponseEntity.ok(authService.googleAuth(request));
     }
