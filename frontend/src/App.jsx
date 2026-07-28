@@ -55,32 +55,40 @@ export default function App() {
               } 
             />
 
-            <Route 
+            {/* <Route 
               path="/set-password" 
               element={
                 <PublicRoute>
                   <SetPassword />
                 </PublicRoute>
               } 
-            />
+            /> */}
 
             {/* Protected Routes */}
-            <Route 
+            {/* <Route 
               path="/dashboard" 
               element={
                 <PublicRoute>
                   <Dashboard />
                 </PublicRoute>
               } 
-            />
-            {/* <Route 
+            /> */}
+            <Route 
               path="/dashboard" 
               element={
                 <ProtectedRoute>
                   <Dashboard />
                 </ProtectedRoute>
               } 
-            /> */}
+            />
+            <Route 
+              path="/set-password" 
+              element={
+                <ProtectedRoute>
+                  <SetPassword />
+                </ProtectedRoute>
+              } 
+            />
           </Routes>
         </Suspense>
       </main>
