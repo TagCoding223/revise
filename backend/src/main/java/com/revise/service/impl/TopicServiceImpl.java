@@ -98,6 +98,34 @@ public class TopicServiceImpl implements TopicService {
         return mapToResponse(updatedTopic);
     }
 
+    @Override
+    @Transactional
+    public ApiResponse reviseAllToday(String userId) {
+        // 1. Get the exact end of "today" (23:59:59) according to the Server
+        LocalDateTime endOfToday = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
+
+        // 2. Let the Database do the heavy lifting!
+        // Only loads topics that belong to the user AND are due today or earlier.
+        List<RevisionTopic> topicsToRevise = topicRepository
+                .findAllByUserIdAndNextRevisionDateLessThanEqual(userId, endOfToday);
+
+        if (topicsToRevise.isEmpty()) {
+            return new ApiResponse(true, "No topics to revise today.");
+        }
+
+        // 3. Apply spaced repetition logic
+        for (RevisionTopic topic : topicsToRevise) {
+            topic.setStage(topic.getStage() + 1);
+            topic.setLastRevisionDate(LocalDateTime.now());
+            int daysToAdd = calculateSpaceRepetitionInterval(topic.getStage());
+            topic.setNextRevisionDate(LocalDateTime.now().plusDays(daysToAdd));
+        }
+
+        // 4. Save back to the DB
+        topicRepository.saveAll(topicsToRevise);
+        return new ApiResponse(true, "Successfully revised " + topicsToRevise.size() + " topics.");
+    }
+
     // --- Helper Methods ---
 
     /**
