@@ -26,6 +26,7 @@ import com.revise.exception.InvalidOtpException;
 import com.revise.exception.ResourceNotFoundException;
 import com.revise.exception.UnauthorizedException;
 import com.revise.exception.UserAlreadyExistsException;
+import com.revise.exception.UserNotVerifiedException;
 import com.revise.repository.UserCredentialRepository;
 import com.revise.repository.UserRepository;
 import com.revise.repository.VerificationCodeRepository;
@@ -102,28 +103,32 @@ public class AuthServiceImpl implements AuthService{
     @Override
     public AuthResponse login(LoginRequest request) {
         // 1. Fetch user by email
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new ResourceNotFoundException("No account found with this email."));
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("No account found with this email."));
 
-        // 2. Ensure they verified their email
-        if(!user.isEmailVerified()){
-            throw new UnauthorizedException("Please verify your email before logging in.");
-        }
+        // 2. Fetch credentials. If missing, it means they signed up with Google and haven't set a password yet!
+        UserCredential credential = credentialRepository.findById(user.getId())
+                .orElseThrow(() -> new UnauthorizedException("No password set for this account. Please log in with Google."));
 
-        // 3. Fetch credentials and verify password
-        UserCredential credential = credentialRepository.findById(user.getId()).orElseThrow(() -> new ResourceNotFoundException("Credentials missing."));
-
-        if(!passwordEncoder.matches(request.getPassword(), credential.getPasswordHash())){
+        // 3. Verify password FIRST. This prevents attackers from spamming OTPs.
+        if (!passwordEncoder.matches(request.getPassword(), credential.getPasswordHash())) {
             throw new UnauthorizedException("Incorrect password.");
         }
 
-        // 4. Generate Jwt token
+        // 4. If password is correct but email is unverified, trigger OTP resend and block login.
+        if (!user.isEmailVerified()) {
+            otpService.generateAndSendOtp(user.getEmail());
+            throw new UserNotVerifiedException("Email unverified. A new OTP has been sent.");
+        }
+
+        // 5. Generate the JWT token
         String token = jwtTokenProvider.generateToken(user.getId());
 
-        // 5. Return the payload
         AuthResponse response = new AuthResponse();
         response.setMessage("Login successful.");
         response.setToken(token);
         response.setUserId(user.getId());
+        response.setNewUser(false); // Manual logins are never routed to set-password
         return response;
     }
 
