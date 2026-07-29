@@ -9,6 +9,7 @@ const CreateRevisionModal = lazy(() => import('../components/modals/CreateRevisi
 const UpdateRevisionModal = lazy(() => import('../components/modals/UpdateRevisionModal'));
 const ViewRevisionModal = lazy(() => import('../components/modals/ViewRevisionModal'));
 const DeleteConfirmModal = lazy(() => import('../components/modals/DeleteConfirmModal'));
+const ReviseAllConfirmModal = lazy(() => import('../components/modals/ReviseAllConfirmModal'));
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '';
 
@@ -19,6 +20,7 @@ export default function Dashboard() {
 
     // Modal Visibility States
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isReviseAllOpen, setIsReviseAllOpen] = useState(false);
     const [viewTopic, setViewTopic] = useState(null);
     const [updateTopic, setUpdateTopic] = useState(null);
     const [deleteTopic, setDeleteTopic] = useState(null);
@@ -47,6 +49,7 @@ export default function Dashboard() {
 
     const handleReviseAllToday = async () => {
         setIsProcessingBulk(true);
+        setIsReviseAllOpen(false);
         try {
             const response = await axios.patch(`${BACKEND_BASE_URL}/api/v1/topics/revise-today`);
             showAlert(response.data.message || "All today's topics marked as revised!", "success");
@@ -124,9 +127,9 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     <button
-                        onClick={handleReviseAllToday}
+                        onClick={() => setIsReviseAllOpen(true)} 
                         disabled={todayTopics.length === 0 || isProcessingBulk}
-                        className="flex-1 sm:flex-none px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-green-400 dark:disabled:bg-green-800 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center"
+                        className="flex-1 sm:flex-none px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-green-400 dark:disabled:bg-green-800 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center cursor-pointer"
                     >
                         {isProcessingBulk ? (
                             <svg className="animate-spin h-4 w-4 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -259,6 +262,15 @@ export default function Dashboard() {
                         onClose={() => setDeleteTopic(null)}
                         onConfirm={handleDelete}
                         topicData={deleteTopic}
+                    />
+                )}
+
+                {isReviseAllOpen && (
+                    <ReviseAllConfirmModal
+                        isOpen={isReviseAllOpen}
+                        onClose={() => setIsReviseAllOpen(false)}
+                        onConfirm={handleReviseAllToday}
+                        topicCount={todayTopics.length}
                     />
                 )}
 
