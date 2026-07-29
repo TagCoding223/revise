@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.revise.dto.request.CreateUserRequest;
 import com.revise.dto.response.ApiResponse;
+import com.revise.dto.response.UserMeResponse;
 import com.revise.dto.response.UserResponse;
 import com.revise.entity.User;
 import com.revise.entity.UserCredential;
@@ -85,5 +86,17 @@ public class DefaultUserService implements UserService{
         credentialRepository.save(credential);
 
         return new ApiResponse(true, "Password set successfully.");
+    }
+
+    @Override
+    public UserMeResponse getMeUserById(String id){
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        UserMeResponse meUser = new UserMeResponse();
+        meUser.setEmail(user.getEmail());
+        meUser.setFullName(user.getFullName());
+        meUser.setEmailVerified(user.isEmailVerified());
+
+        return meUser;
     }
 }
