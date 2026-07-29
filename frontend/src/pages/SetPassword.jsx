@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext';
+import { useAlert } from '../context/AlertContext';
 
 // --- Zod Validation Schema ---
 const setPasswordSchema = z.object({
@@ -28,6 +29,7 @@ export default function SetPassword() {
   const navigate = useNavigate();
 
   const { markPasswordSet } = useAuth();
+  const { showAlert } = useAlert();
 
   const {
     register,
@@ -46,11 +48,12 @@ export default function SetPassword() {
 
       // Clear the flag from context and local storage!
       markPasswordSet();
-      
+      showAlert("Password set successfully! Welcome to your dashboard.", "success", 5000);
       // On success, redirect to dashboard to start studying
       navigate('/dashboard');
     } catch (error) {
       console.error('Failed to set password', error);
+      showAlert(error.response?.data?.message || 'Failed to save your new password. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
