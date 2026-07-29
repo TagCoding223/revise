@@ -12,74 +12,81 @@ const OtpVerify = lazy(() => import('./pages/OtpVerify'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const SetPassword = lazy(() => import('./pages/SetPassword'));
 const Profile = lazy(() => import('./pages/Profile'));
+const Legal = lazy(() => import('./pages/Legal'));
 
 export default function App() {
   return (
     <div className="min-h-screen">
       <Navbar />
-      
+
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 2. Wrap the Routes in Suspense, passing the loading bar to the fallback prop */}
         <Suspense fallback={<TopLoadingBar />}>
           <Routes>
             {/* Public Routes */}
-            <Route 
-              path="/" 
+            <Route
+              path="/"
               element={
                 <PublicRoute>
                   <Landing />
                 </PublicRoute>
-              } 
+              }
             />
-            <Route 
-              path="/login" 
+            <Route
+              path="/legal"
+              element={
+                <Legal />// We don't need to wrap this in a PublicRoute or ProtectedRoute if everyone can view it!
+              }
+            />
+            <Route
+              path="/login"
               element={
                 <PublicRoute>
                   <Auth />
                 </PublicRoute>
-              } 
+              }
             />
-            <Route 
-              path="/signup" 
+            <Route
+              path="/signup"
               element={
                 <PublicRoute>
                   <Auth />
                 </PublicRoute>
-              } 
+              }
             />
-            <Route 
-              path="/verify-otp" 
+            <Route
+              path="/verify-otp"
               element={
                 <PublicRoute>
                   <OtpVerify />
                 </PublicRoute>
-              } 
+              }
             />
 
             {/* Protected Routes */}
-            <Route 
-              path="/dashboard" 
+            <Route
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <Dashboard />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/set-password" 
+            <Route
+              path="/set-password"
               element={
                 <ProtectedRoute>
                   <SetPassword />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/profile" 
+            <Route
+              path="/profile"
               element={
                 <ProtectedRoute>
                   <Profile />
                 </ProtectedRoute>
-              } 
+              }
             />
           </Routes>
         </Suspense>
