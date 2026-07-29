@@ -1,63 +1,21 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import axios from 'axios';
 import { TopicCard } from '../components/shared/TopicCard';
 import TopLoadingBar from '../components/shared/TopLoadingBar';
+import { useAlert } from '../context/AlertContext';
+import { useAuth } from '../context/AuthContext';
 
 const CreateRevisionModal = lazy(() => import('../components/modals/CreateRevisionModal'));
 const UpdateRevisionModal = lazy(() => import('../components/modals/UpdateRevisionModal'));
 const ViewRevisionModal = lazy(() => import('../components/modals/ViewRevisionModal'));
 const DeleteConfirmModal = lazy(() => import('../components/modals/DeleteConfirmModal'));
 
-// Dynamic date helpers for realistic mock data
-const today = new Date().toISOString();
-const yesterday = new Date(Date.now() - 86400000).toISOString();
-const tomorrow = new Date(Date.now() + 86400000).toISOString();
-const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString();
-
-const initialTopics = [
-    {
-        id: 'uuid-1',
-        title: 'Java Class Loader Subsystem',
-        description: 'Workflow and inner workings of the loading phase. Focus on system environment classpath variable overrides and handling file-based inputs.',
-        links: ['https://docs.oracle.com/javase/specs/', 'https://www.baeldung.com/java-classloaders'],
-        stage: 3,
-        category: 'today',
-        lastRevisionDate: yesterday,
-        nextRevisionDate: today
-    },
-    {
-        id: 'uuid-2',
-        title: 'DBMS Normalization Forms',
-        description: 'Differences between 3NF, 4NF, and 5NF with practical examples of data anomalies.',
-        links: [],
-        stage: 1,
-        category: 'today',
-        lastRevisionDate: null,
-        nextRevisionDate: today
-    },
-    {
-        id: 'uuid-3',
-        title: 'Tomcat Servlets & WEB-INF',
-        description: 'Directory structure routing and hidden configuration files behavior when deleted.',
-        links: [],
-        stage: 2,
-        category: 'tomorrow',
-        lastRevisionDate: today,
-        nextRevisionDate: tomorrow
-    },
-    {
-        id: 'uuid-4',
-        title: 'Algorithm Design Approaches',
-        description: 'Comparison between greedy, dynamic programming, and divide & conquer strategies.',
-        links: ['https://leetcode.com/problems/'],
-        stage: 5,
-        category: 'other',
-        lastRevisionDate: yesterday,
-        nextRevisionDate: nextWeek
-    }
-];
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '';
 
 export default function Dashboard() {
-    const [topics, setTopics] = useState(initialTopics);
+    const [topics, setTopics] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isProcessingBulk, setIsProcessingBulk] = useState(false);
 
     // Modal Visibility States
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -65,78 +23,82 @@ export default function Dashboard() {
     const [updateTopic, setUpdateTopic] = useState(null);
     const [deleteTopic, setDeleteTopic] = useState(null);
 
-    const userName = "Student";
+    const { showAlert } = useAlert();
+    const { user } = useAuth(); // If you added full name to context, you can use it here
 
-    // Helper to calculate a future date based on stage (simplified for mock purposes)
-    const calculateNextDate = (currentStage) => {
-        const daysToAdd = currentStage === 1 ? 3 : currentStage === 2 ? 7 : 16;
-        return new Date(Date.now() + daysToAdd * 86400000).toISOString();
+    // --- Fetch Topics on Mount ---
+    const fetchTopics = async () => {
+        try {
+            const response = await axios.get(`${BACKEND_BASE_URL}/api/v1/topics`);
+            setTopics(response.data);
+        } catch (error) {
+            console.error("Failed to load topics:", error);
+            showAlert("Failed to load your topics. Please try refreshing the page.", "error");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    // --- Handlers for Bulk Actions ---
-    const handleReviseAllToday = () => {
-        const now = new Date().toISOString();
-        setTopics(currentTopics =>
-            currentTopics.map(t => {
-                if (t.category === 'today') {
-                    return { 
-                        ...t, 
-                        stage: t.stage + 1, 
-                        category: 'other',
-                        lastRevisionDate: now,
-                        nextRevisionDate: calculateNextDate(t.stage)
-                    };
-                }
-                return t;
-            })
-        );
+    useEffect(() => {
+        fetchTopics();
+    }, []);
+
+    // --- API Mutation Handlers ---
+
+    const handleReviseAllToday = async () => {
+        setIsProcessingBulk(true);
+        try {
+            const response = await axios.patch(`${BACKEND_BASE_URL}/api/v1/topics/revise-today`);
+            showAlert(response.data.message || "All today's topics marked as revised!", "success");
+            await fetchTopics(); // Refetch to get updated dates and categories
+        } catch (error) {
+            showAlert(error.response?.data?.message || "Failed to bulk revise topics.", "error");
+        } finally {
+            setIsProcessingBulk(false);
+        }
     };
 
-    // --- Handlers for Single Card Actions ---
-    const handleRevise = (topicId) => {
-        const now = new Date().toISOString();
-        setTopics(currentTopics =>
-            currentTopics.map(t =>
-                t.id === topicId
-                    ? { 
-                        ...t, 
-                        stage: t.stage + 1, 
-                        category: 'other',
-                        lastRevisionDate: now,
-                        nextRevisionDate: calculateNextDate(t.stage)
-                      }
-                    : t
-            )
-        );
+    const handleRevise = async (topicId) => {
+        try {
+            await axios.patch(`${BACKEND_BASE_URL}/api/v1/topics/${topicId}/revise`);
+            showAlert("Topic marked as revised! Excellent work.", "success");
+            await fetchTopics();
+        } catch (error) {
+            showAlert(error.response?.data?.message || "Failed to mark topic as revised.", "error");
+        }
     };
 
-    // --- Modal Submission Handlers ---
-    const handleCreateNew = (newTopicData) => {
-        const now = new Date().toISOString();
-        const newTopic = {
-            id: `uuid-${Date.now()}`, 
-            ...newTopicData,
-            stage: 1,
-            category: 'today',
-            lastRevisionDate: null,
-            nextRevisionDate: now // Next revision is today for a fresh topic
-        };
-        setTopics([newTopic, ...topics]);
-        setIsCreateOpen(false);
+    const handleCreateNew = async (newTopicData) => {
+        try {
+            await axios.post(`${BACKEND_BASE_URL}/api/v1/topics`, newTopicData);
+            showAlert("New topic created successfully.", "success");
+            setIsCreateOpen(false);
+            await fetchTopics();
+        } catch (error) {
+            showAlert(error.response?.data?.message || "Failed to create topic.", "error");
+        }
     };
 
-    const handleUpdate = (updatedTopicData) => {
-        setTopics(currentTopics =>
-            currentTopics.map(t =>
-                t.id === updatedTopicData.id ? updatedTopicData : t
-            )
-        );
-        setUpdateTopic(null);
+    const handleUpdate = async (updatedTopicData) => {
+        try {
+            await axios.put(`${BACKEND_BASE_URL}/api/v1/topics/${updatedTopicData.id}`, updatedTopicData);
+            showAlert("Topic updated successfully.", "success");
+            setUpdateTopic(null);
+            await fetchTopics();
+        } catch (error) {
+            showAlert(error.response?.data?.message || "Failed to update topic.", "error");
+        }
     };
 
-    const handleDelete = (topicId) => {
-        setTopics(currentTopics => currentTopics.filter(t => t.id !== topicId));
-        setDeleteTopic(null);
+    const handleDelete = async (topicId) => {
+        try {
+            await axios.delete(`${BACKEND_BASE_URL}/api/v1/topics/${topicId}`);
+            showAlert("Topic deleted successfully.", "success");
+            setDeleteTopic(null);
+            await fetchTopics();
+        } catch (error) {
+            showAlert(error.response?.data?.message || "Failed to delete topic.", "error");
+        }
     };
 
     // --- Section Filtering ---
@@ -144,14 +106,17 @@ export default function Dashboard() {
     const tomorrowTopics = topics.filter(t => t.category === 'tomorrow');
     const otherTopics = topics.filter(t => t.category === 'other');
 
+    if (isLoading) {
+        return <TopLoadingBar />;
+    }
+
     return (
         <div className="pb-10 relative">
-
             {/* Dashboard Header */}
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        Welcome back, {userName}
+                        Welcome back
                     </h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
                         You have {todayTopics.length} topics to revise today.
@@ -160,12 +125,19 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     <button
                         onClick={handleReviseAllToday}
-                        disabled={todayTopics.length === 0}
+                        disabled={todayTopics.length === 0 || isProcessingBulk}
                         className="flex-1 sm:flex-none px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-green-400 dark:disabled:bg-green-800 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center"
                     >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        {isProcessingBulk ? (
+                            <svg className="animate-spin h-4 w-4 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        ) : (
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        )}
                         Revise All Today
                     </button>
                     <button
