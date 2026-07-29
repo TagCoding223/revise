@@ -66,6 +66,12 @@ public class TopicController {
         return ResponseEntity.ok(topicService.markTopicAsRevised(id, principal.getName()));
     }
     
+    @PatchMapping("/revise-today")
+    public ResponseEntity<ApiResponse> reviseAllToday(Principal principal) {
+        // Triggers the optimized bulk database update strictly for the authenticated user
+        return ResponseEntity.ok(topicService.reviseAllToday(principal.getName()));
+    }
+
     @GetMapping("/testSecureRoute")
     public String test() {
         return new String("Secure Route"); // if JWT Security Filter not implement then spring security throw 403 Forbidden: The server knows exactly who you are, but you lack the required account privileges or roles. Re-authenticating will not fix it. with and while passing jwt token in request barrier but Spring Security, by default, does not know what a JWT is. It expects traditional session cookies. Therefore, we must create a custom filter that intercepts every incoming HTTP request
