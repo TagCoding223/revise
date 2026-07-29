@@ -76,9 +76,20 @@ export default function Auth() {
       const response = await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/login`, data);
       login(response.data);
       showAlert("Login successful! Welcome back.", "success", 5000);
-      navigate('/dashboard')
+      navigate('/dashboard');
     } catch (error) {
-      showAlert(error.response?.data?.message || 'Login failed. Please try again.');
+      const status = error.response?.status;
+      const errorMsg = error.response?.data?.message || 'Login failed. Please try again.';
+
+      // Intercept the specific unverified error
+      if (status === 403 && errorMsg.includes("unverified")) {
+        showAlert("Your email is not verified. We've sent a new OTP code to your inbox.", "warning", 8000);
+        // Redirect to OTP page and pass the email so the UI works
+        navigate('/verify-otp', { state: { email: data.email } });
+      } else {
+        // Handle all other errors (like wrong password or "use Google" message)
+        showAlert(errorMsg, 'error');
+      }
     }
   };
 

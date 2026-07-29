@@ -182,12 +182,13 @@ public class AuthServiceImpl implements AuthService{
         try {
             // 1. Initialize the Google Token Verifier
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                new NetHttpTransport(), new GsonFactory()
-            ).setAudience(Collections.singletonList(googleClientId)).build();
+                    new NetHttpTransport(), new GsonFactory())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
 
             // 2. Verify the token provided by the frontend
             GoogleIdToken idToken = verifier.verify(request.getIdToken());
-
+            
             if (idToken == null) {
                 throw new UnauthorizedException("Invalid Google ID Token.");
             }
@@ -200,33 +201,38 @@ public class AuthServiceImpl implements AuthService{
             // 4. Check if user already exists in our database
             Optional<User> existingUserOpt = userRepository.findByEmail(email);
             User user;
-            boolean isNewUser = false; // Track the user state
+            
+            // We will use this to tell the frontend if they need to set a password
+            boolean needsPassword = false; 
 
-            if(existingUserOpt.isPresent()){
+            if (existingUserOpt.isPresent()) {
                 user = existingUserOpt.get();
-                // Optional: If they previously signed up with LOCAL, you might want to update their auth provider to "GOOGLE" or handle linking accounts here.
-                user.setAuthProvider("GOOGLE");
-                user.setEmailVerified(true); // Google emails are implicitly verified
+                user.setEmailVerified(true); 
                 userRepository.save(user);
-            } else{
+                
+                // NEW LOGIC: Check if they actually set a password during their previous visit
+                boolean hasPassword = credentialRepository.existsById(user.getId());
+                if (!hasPassword) {
+                    needsPassword = true; // Force them back to the Set Password page
+                }
+                
+            } else {
                 // 5. Create a new user if they don't exist
                 CreateUserRequest userReq = new CreateUserRequest();
                 userReq.setEmail(email);
                 userReq.setFullName(name);
-                userReq.setAuthProvider("GOOGLE"); // Mark as Google user
+                userReq.setAuthProvider("GOOGLE"); 
 
                 UserResponse createdUserResponse = userService.createUser(userReq);
-
-                // Fetch the newly created entity so we can mark it as verified
+                
                 user = userRepository.findById(createdUserResponse.getId())
                         .orElseThrow(() -> new RuntimeException("Failed to retrieve created user"));
                 
                 user.setEmailVerified(true);
                 userRepository.save(user);
                 
-                // Note: We DO NOT create a UserCredential row here, because Google users don't have a local password to hash.
-
-                isNewUser = true; // Flag them as a new user
+                // A brand new Google user will definitely need a password
+                needsPassword = true; 
             }
 
             // 6. Generate our custom JWT for the React frontend
@@ -237,10 +243,12 @@ public class AuthServiceImpl implements AuthService{
             response.setMessage("Google authentication successful.");
             response.setToken(jwt);
             response.setUserId(user.getId());
-            response.setNewUser(isNewUser);
+            
+            // Attach the flag to trigger the frontend redirect
+            response.setNewUser(needsPassword); 
             return response;
+
         } catch (Exception e) {
-            // If the token is expired, tampered with, or network fails
             throw new UnauthorizedException("Google authentication failed: " + e.getMessage());
         }
     }
