@@ -39,30 +39,21 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class AuthServiceImpl implements AuthService{
+public class AuthServiceImpl implements AuthService {
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String googleClientId;
 
-    // Injecting UserService to handle the profile side of things
     private final UserService userService;
     private final UserCredentialRepository credentialRepository;
-
-    // Injecting the PasswordEncoder bean
     private final PasswordEncoder passwordEncoder;
-
-    // Injecting the UserRepository for the existence check
     private final UserRepository userRepository;
-
     private final OtpService otpService;
     private final VerificationCodeRepository otpRepository;
-
-    // Inject the JWT provider
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     @Transactional
-    // TODO: Add Validation for form data like password should be 8 for signup and login
     public AuthResponse signup(SignupRequest request) {
         // 1. Check if user exists. If yes, throw exception.
         if(userRepository.existsByEmail(request.getEmail())){
@@ -77,7 +68,7 @@ public class AuthServiceImpl implements AuthService{
 
         UserResponse createdUser = userService.createUser(userReq);
 
-        // 3. Create the Credentials (we will hash the password later)
+        // 3. Create the Credentials 
         User userReference = new User();
         userReference.setId(createdUser.getId());
 
@@ -93,7 +84,7 @@ public class AuthServiceImpl implements AuthService{
         // 4. Generate and send OTP via email.
         otpService.generateAndSendOtp(request.getEmail());
 
-        // 5. Return flow response
+        // 5. Return flow response (NO TOKEN ISSUED HERE)
         AuthResponse response = new AuthResponse();
         response.setMessage("Signup successful. Please verify OTP.");
         response.setUserId(createdUser.getId());
@@ -106,7 +97,7 @@ public class AuthServiceImpl implements AuthService{
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("No account found with this email."));
 
-        // 2. Fetch credentials. If missing, it means they signed up with Google and haven't set a password yet!
+        // 2. Fetch credentials. If missing, they signed up with Google.
         UserCredential credential = credentialRepository.findById(user.getId())
                 .orElseThrow(() -> new UnauthorizedException("No password set for this account. Please log in with Google."));
 
@@ -128,27 +119,28 @@ public class AuthServiceImpl implements AuthService{
         response.setMessage("Login successful.");
         response.setToken(token);
         response.setUserId(user.getId());
-        response.setNewUser(false); // Manual logins are never routed to set-password
         return response;
     }
 
     @Override
     public AuthResponse verifyOtp(String email, String otp) {
-        // 1. Fetch the OTP record (Throws 404 if missing)
-        VerificationCode storedCode = otpRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("No active OTP found for this email."));
+        // 1. Fetch the OTP record 
+        VerificationCode storedCode = otpRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("No active OTP found for this email."));
 
-        // 2. Check expiration (Throw 400 if expired)
+        // 2. Check expiration 
         if(storedCode.getExpiresAt().isBefore(LocalDateTime.now())){
             throw new InvalidOtpException("Your OTP has expired. Please request a new one.");
         }
 
-        // 3. Check if the code matches (Throws 400 if wrong)
+        // 3. Check if the code matches 
         if (!storedCode.getCode().equals(otp)) {
             throw new InvalidOtpException("Invalid verification code. Please try again.");
         }
 
-        // 4. Mark user as verified (Throws 404 if user somehow vanished)
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found in the system."));
+        // 4. Mark user as verified 
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found in the system."));
 
         user.setEmailVerified(true);
         userRepository.save(user);
@@ -156,10 +148,10 @@ public class AuthServiceImpl implements AuthService{
         // 5. Clean up the used OTP
         otpRepository.delete(storedCode);
 
-        // 6. Jwt Token generate
+        // 6. Generate the JWT Token now that they are verified
         String token = jwtTokenProvider.generateToken(user.getId());
 
-        // 7. Return success response
+        // 7. Return success response with Token
         AuthResponse response = new AuthResponse();
         response.setMessage("Email verified successfully!");
         response.setToken(token);
@@ -167,7 +159,6 @@ public class AuthServiceImpl implements AuthService{
         return response;
     }
     
-    // Method to handle the Resend button on the frontend
     @Override
     public AuthResponse resendOtp(String email){
         otpService.generateAndSendOtp(email);
@@ -201,21 +192,15 @@ public class AuthServiceImpl implements AuthService{
             // 4. Check if user already exists in our database
             Optional<User> existingUserOpt = userRepository.findByEmail(email);
             User user;
-            
-            // We will use this to tell the frontend if they need to set a password
-            boolean needsPassword = false; 
 
             if (existingUserOpt.isPresent()) {
                 user = existingUserOpt.get();
-                user.setEmailVerified(true); 
-                userRepository.save(user);
                 
-                // NEW LOGIC: Check if they actually set a password during their previous visit
-                boolean hasPassword = credentialRepository.existsById(user.getId());
-                if (!hasPassword) {
-                    needsPassword = true; // Force them back to the Set Password page
+                // If they previously signed up manually but never verified, Google verifies them now.
+                if (!user.isEmailVerified()) {
+                    user.setEmailVerified(true); 
+                    userRepository.save(user);
                 }
-                
             } else {
                 // 5. Create a new user if they don't exist
                 CreateUserRequest userReq = new CreateUserRequest();
@@ -230,9 +215,6 @@ public class AuthServiceImpl implements AuthService{
                 
                 user.setEmailVerified(true);
                 userRepository.save(user);
-                
-                // A brand new Google user will definitely need a password
-                needsPassword = true; 
             }
 
             // 6. Generate our custom JWT for the React frontend
@@ -244,8 +226,6 @@ public class AuthServiceImpl implements AuthService{
             response.setToken(jwt);
             response.setUserId(user.getId());
             
-            // Attach the flag to trigger the frontend redirect
-            response.setNewUser(needsPassword); 
             return response;
 
         } catch (Exception e) {
