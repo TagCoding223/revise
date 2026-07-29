@@ -46,33 +46,16 @@ export default function App() {
                 </PublicRoute>
               } 
             />
-            {/* <Route 
+            <Route 
               path="/verify-otp" 
               element={
                 <PublicRoute>
                   <OtpVerify />
                 </PublicRoute>
               } 
-            /> */}
-
-            {/* <Route 
-              path="/set-password" 
-              element={
-                <PublicRoute>
-                  <SetPassword />
-                </PublicRoute>
-              } 
-            /> */}
+            />
 
             {/* Protected Routes */}
-            {/* <Route 
-              path="/dashboard" 
-              element={
-                <PublicRoute>
-                  <Dashboard />
-                </PublicRoute>
-              } 
-            /> */}
             <Route 
               path="/dashboard" 
               element={
@@ -86,14 +69,6 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <SetPassword />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/verify-otp" 
-              element={
-                <ProtectedRoute>
-                  <OtpVerify />
                 </ProtectedRoute>
               } 
             />
