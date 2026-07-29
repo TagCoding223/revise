@@ -2,11 +2,9 @@ package com.revise.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.revise.dto.request.CreateUserRequest;
 import com.revise.dto.request.SetPasswordRequest;
 import com.revise.dto.response.ApiResponse;
 import com.revise.dto.response.UserMeResponse;
-import com.revise.dto.response.UserResponse;
 import com.revise.exception.UnauthorizedException;
 import com.revise.service.UserService;
 
@@ -14,16 +12,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.security.Principal;
-import java.util.List;
-
-import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 // block all endpoints except set-password endpoint

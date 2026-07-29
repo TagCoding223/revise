@@ -146,17 +146,21 @@ public class TopicServiceImpl implements TopicService {
     }
 
     /**
-     * Spaced Repetition Algorithm.
-     * Determines how many days to wait before showing the topic again.
+     * Lifelong Spaced Repetition Algorithm.
+     * Determines how many days to wait before showing the topic again based on the
+     * current stage.
      */
-    private int calculateSpaceRepetitionInterval(int stage){
+    private int calculateSpaceRepetitionInterval(int stage) {
         return switch (stage) {
-            case 1 -> 1;// Revisit next day
-            case 2 -> 3;  // Revisit in 3 days
-            case 3 -> 7;  // Revisit in 1 week
-            case 4 -> 14; // Revisit in 2 weeks
-            case 5 -> 30; // Revisit in 1 month
-            default -> 60; // Max out at 2 months for deeply learned concepts
+            case 1 -> 1; // +1 Day: Initial encoding
+            case 2 -> 3; // +3 Days: Consolidating short-term memory
+            case 3 -> 7; // +7 Days: Bridging to long-term memory
+            case 4 -> 16; // +16 Days: Strengthening
+            case 5 -> 35; // +35 Days: Deep retention
+            case 6 -> 120; // +4 Months (~120 days): Long-term check
+            case 7 -> 180; // +6 Months (~180 days): Permanent integration
+            case 8 -> 365; // +1 Year: Lifelong maintenance
+            default -> 730; // +2 Years (Stage 9+): Lifelong maintenance
         };
     }
 
