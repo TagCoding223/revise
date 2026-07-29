@@ -61,4 +61,10 @@ public class GlobalExceptionHandler {
         // Return 400 Bad Request
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(UserNotVerifiedException.class)
+    public ResponseEntity<ApiResponse> handleUserNotVerified(UserNotVerifiedException ex) {
+        // 403 Forbidden is the standard status for "Authenticated but lacking required status (verification)"
+        return new ResponseEntity<>(new ApiResponse(false, ex.getMessage()), HttpStatus.FORBIDDEN); 
+    }
 }
