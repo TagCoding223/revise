@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useAlert } from '../context/AlertContext';
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '';
 
@@ -32,11 +33,11 @@ export default function Auth() {
   const navigate = useNavigate();
   
   const { login } = useAuth();
+  const { showAlert } = useAlert();
 
   // Tabs state tracking
   const isLoginRoute = location.pathname === '/login';
   const [activeTab, setActiveTab] = useState(isLoginRoute ? 'login' : 'signup');
-  const [authError, setAuthError] = useState(''); // To handle API errors gracefully
 
   // Show/Hide password toggles
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -45,7 +46,6 @@ export default function Auth() {
   // Sync state if URL changes directly
   useEffect(() => {
     setActiveTab(location.pathname === '/login' ? 'login' : 'signup');
-    setAuthError(''); // Clear errors on tab switch
   }, [location.pathname]);
 
   const handleTabSwitch = (tab) => {
@@ -73,54 +73,53 @@ export default function Auth() {
   // --- Submission Handlers ---
   const onLogin = async (data) => {
     try {
-      setAuthError('');
       const response = await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/login`, data);
       login(response.data);
+      showAlert("Login successful! Welcome back.", "success", 5000);
       navigate('/dashboard')
     } catch (error) {
-      setAuthError(error.response?.data?.message || 'Login failed. Please try again.');
+      showAlert(error.response?.data?.message || 'Login failed. Please try again.');
     }
   };
 
   const onSignup = async (data) => {
     try {
-      setAuthError('');
       await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/signup`, data);
+      showAlert("Signup successful! Please check your email for the OTP.", "success", 10000);
       navigate('/verify-otp');
     } catch (error) {
-      setAuthError(error.response?.data?.message || 'Signup failed. Please try again.');
+      showAlert(error.response?.data?.message || 'Signup failed. Please try again.');
     }
   };
 
   // --- Google OAuth Handler ---
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      setAuthError('');
       // Extract the ID token from the response
       const idToken = credentialResponse.credential;
 
       // Send the token to your Spring Boot endpoint
       const response = await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/google`, { idToken });
 
-      console.log("Backend Auth Response:", response.data);
-
       // Save the session in the global AuthContext
       login(response.data);
 
       // Route based on user status and Redirect to the protected dashboard or set-password
       if (response.data.newUser === true) {
+        showAlert("Google authentication successful! Please secure your account with a password.", "success", 7000);
         navigate('/set-password');
       } else {
+        showAlert("Google login successful! Welcome back.", "success", 5000);
         navigate('/dashboard');
       }
     } catch (error) {
       console.error("Google authentication failed", error);
-      setAuthError(error.response?.data?.message || 'Google authentication failed.');
+      showAlert(error.response?.data?.message || 'Google authentication failed.');
     }
   };
 
   const handleGoogleError = () => {
-    setAuthError('Google login prompt closed or failed.');
+    showAlert('Google login prompt closed or failed.');
   };
 
   return (
@@ -155,13 +154,6 @@ export default function Auth() {
             style={{ left: activeTab === 'login' ? '0%' : '50%' }}
           />
         </div>
-
-        {/* Global Auth Error Display */}
-        {authError && (
-          <div className="mx-6 sm:mx-8 mt-6 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-            {authError}
-          </div>
-        )}
 
         {/* Content Area */}
         <div className="p-6 sm:p-8 relative min-h-[440px]">
