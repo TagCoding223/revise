@@ -95,37 +95,34 @@ export default function Auth() {
 
   const onSignup = async (data) => {
     try {
+      // 1. Send signup request (Backend now returns NO token here)
       await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/signup`, data);
+      
       showAlert("Signup successful! Please check your email for the OTP.", "success", 10000);
-      navigate('/verify-otp', {state: {email: data.email}});
+      
+      // 2. Navigate to OTP page, passing the email. DO NOT call login() here.
+      navigate('/verify-otp', { state: { email: data.email } }); 
     } catch (error) {
-      showAlert(error.response?.data?.message || 'Signup failed. Please try again.');
+      showAlert(error.response?.data?.message || 'Signup failed. Please try again.', 'error');
     }
   };
 
   // --- Google OAuth Handler ---
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      // Extract the ID token from the response
       const idToken = credentialResponse.credential;
-
-      // Send the token to your Spring Boot endpoint
       const response = await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/google`, { idToken });
 
-      // Save the session in the global AuthContext
+      // 1. Log the user in immediately
       login(response.data);
 
-      // Route based on user status and Redirect to the protected dashboard or set-password
-      if (response.data.newUser === true) {
-        showAlert("Google authentication successful! Please secure your account with a password.", "success", 7000);
-        navigate('/set-password');
-      } else {
-        showAlert("Google login successful! Welcome back.", "success", 5000);
-        navigate('/dashboard');
-      }
+      // 2. Route straight to the dashboard (no more password traps!)
+      showAlert("Google login successful! Welcome.", "success", 5000);
+      navigate('/dashboard');
+      
     } catch (error) {
       console.error("Google authentication failed", error);
-      showAlert(error.response?.data?.message || 'Google authentication failed.');
+      showAlert(error.response?.data?.message || 'Google authentication failed.', 'error');
     }
   };
 
