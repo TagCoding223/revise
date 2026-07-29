@@ -86,7 +86,7 @@ export default function Auth() {
     try {
       await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/signup`, data);
       showAlert("Signup successful! Please check your email for the OTP.", "success", 10000);
-      navigate('/verify-otp');
+      navigate('/verify-otp', {state: {email: data.email}});
     } catch (error) {
       showAlert(error.response?.data?.message || 'Signup failed. Please try again.');
     }
