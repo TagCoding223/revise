@@ -15,4 +15,8 @@ public interface TopicRepository extends JpaRepository<RevisionTopic, String>{
     // Highly optimized DB query
     // This translates to: SELECT * FROM topics WHERE user_id = ? AND next_revision_date <= ?
     List<RevisionTopic> findAllByUserIdAndNextRevisionDateLessThanEqual(String userId, LocalDateTime date);
+
+    // Pull Sync Query for Android
+    // Translates to: SELECT * FROM topics WHERE user_id = ? AND updated_at >= ?
+    List<RevisionTopic> findByUserIdAndUpdatedAtGreaterThanEqual(String userId, LocalDateTime since);
 }
