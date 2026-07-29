@@ -29,3 +29,13 @@
     animation: progress 1.5s infinite linear;
   }
 }
+
+/* custom animation for Time Bar Animation Alert */
+@keyframes fill-bar {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+.animate-fill-bar {
+  animation: fill-bar linear forwards;
+}
