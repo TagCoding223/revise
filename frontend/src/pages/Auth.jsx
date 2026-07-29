@@ -31,7 +31,7 @@ const signupSchema = z.object({
 export default function Auth() {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const { login } = useAuth();
   const { showAlert } = useAlert();
 
@@ -42,6 +42,9 @@ export default function Auth() {
   // Show/Hide password toggles
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
+
+  // Track submission state to disable buttons
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync state if URL changes directly
   useEffect(() => {
@@ -72,6 +75,7 @@ export default function Auth() {
 
   // --- Submission Handlers ---
   const onLogin = async (data) => {
+    setIsSubmitting(true); // Disable buttons
     try {
       const response = await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/login`, data);
       login(response.data);
@@ -90,25 +94,31 @@ export default function Auth() {
         // Handle all other errors (like wrong password or "use Google" message)
         showAlert(errorMsg, 'error');
       }
+    } finally {
+      setIsSubmitting(false); // Re-enable buttons
     }
   };
 
   const onSignup = async (data) => {
+    setIsSubmitting(true); // Disable buttons
     try {
       // 1. Send signup request (Backend now returns NO token here)
       await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/signup`, data);
-      
+
       showAlert("Signup successful! Please check your email for the OTP.", "success", 10000);
-      
+
       // 2. Navigate to OTP page, passing the email. DO NOT call login() here.
-      navigate('/verify-otp', { state: { email: data.email } }); 
+      navigate('/verify-otp', { state: { email: data.email } });
     } catch (error) {
       showAlert(error.response?.data?.message || 'Signup failed. Please try again.', 'error');
+    } finally {
+      setIsSubmitting(false); // Re-enable buttons
     }
   };
 
   // --- Google OAuth Handler ---
   const handleGoogleSuccess = async (credentialResponse) => {
+    setIsSubmitting(true); // Disable buttons
     try {
       const idToken = credentialResponse.credential;
       const response = await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/google`, { idToken });
@@ -119,10 +129,12 @@ export default function Auth() {
       // 2. Route straight to the dashboard (no more password traps!)
       showAlert("Google login successful! Welcome.", "success", 5000);
       navigate('/dashboard');
-      
+
     } catch (error) {
       console.error("Google authentication failed", error);
       showAlert(error.response?.data?.message || 'Google authentication failed.', 'error');
+    } finally {
+      setIsSubmitting(false); // Re-enable buttons
     }
   };
 
@@ -216,9 +228,17 @@ export default function Auth() {
 
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                disabled={isSubmitting}
+                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 dark:disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex justify-center items-center"
               >
-                Log In
+                {isSubmitting ? (
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  'Log In'
+                )}
               </button>
             </form>
 
@@ -322,9 +342,17 @@ export default function Auth() {
 
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors mt-2"
+                disabled={isSubmitting}
+                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 dark:disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex justify-center items-center mt-2"
               >
-                Sign Up
+                {isSubmitting ? (
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  'Sign Up'
+                )}
               </button>
             </form>
 
