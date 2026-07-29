@@ -55,7 +55,7 @@ export function TopicCard({ topic, isActive, onView, onUpdate, onDelete, onRevis
         
         <button 
           onClick={() => onView(topic)}
-          className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors" 
+          className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors cursor-pointer" 
           title="View Details"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,7 +66,7 @@ export function TopicCard({ topic, isActive, onView, onUpdate, onDelete, onRevis
 
         <button 
           onClick={() => onUpdate(topic)}
-          className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors" 
+          className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors cursor-pointer" 
           title="Update"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,7 +76,7 @@ export function TopicCard({ topic, isActive, onView, onUpdate, onDelete, onRevis
 
         <button 
           onClick={() => onDelete(topic)}
-          className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors" 
+          className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors cursor-pointer" 
           title="Delete"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,7 +89,7 @@ export function TopicCard({ topic, isActive, onView, onUpdate, onDelete, onRevis
           disabled={!isActive}
           className={`ml-auto px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center ${
             isActive 
-              ? 'bg-green-600 hover:bg-green-700 text-white shadow-sm' 
+              ? 'bg-green-600 hover:bg-green-700 text-white shadow-sm cursor-pointer' 
               : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
           }`}
         >
