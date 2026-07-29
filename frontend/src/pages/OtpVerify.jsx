@@ -1,11 +1,56 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import { useAlert } from '../context/AlertContext';
+import { useAuth } from '../context/AuthContext';
+
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '';
 
 export default function OtpVerify() {
   const [otp, setOtp] = useState(['', '', '', '']);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  
+  // Timer State: 2 mins 10 secs = 130 seconds
+  const [timeLeft, setTimeLeft] = useState(130); 
+  
   const inputRefs = useRef([]);
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  const { showAlert } = useAlert();
+  const { login } = useAuth();
+
+  // Extract the email passed from the Auth.jsx signup page
+  const email = location.state?.email;
+
+  // Fallback: If someone navigates here directly without signing up, bounce them back
+  useEffect(() => {
+    if (!email) {
+      showAlert("No email provided. Please sign up first.", "warning");
+      navigate('/signup');
+    }
+  }, [email, navigate, showAlert]);
+
+  // Timer Countdown Effect
+  useEffect(() => {
+    // Stop counting if time runs out
+    if (timeLeft <= 0) return;
+
+    const timerId = setInterval(() => {
+      setTimeLeft((prevTime) => prevTime - 1);
+    }, 1000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(timerId);
+  }, [timeLeft]);
+
+  // Helper to format seconds into MM:SS
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
 
   // Handle individual input changes
   const handleChange = (index, e) => {
@@ -55,32 +100,55 @@ export default function OtpVerify() {
     const otpCode = otp.join('');
     
     if (otpCode.length < 4) {
-      // You could add a toast error notification here
+      showAlert("Please enter the complete 4-digit code.", "warning");
       return;
     }
 
     setIsVerifying(true);
 
     try {
-      // MOCK API CALL: Replace with your actual Spring Boot endpoint
-      // await axios.post('/api/v1/auth/verify-otp', { otp: otpCode });
+      // Send parameters exactly as Spring Boot's @RequestParam expects
+      const response = await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/verify-otp`, null, {
+        params: { email, otp: otpCode }
+      });
       
-      console.log('Verifying OTP:', otpCode);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+      // Save the session in context
+      login(response.data);
       
-      // On success, redirect to set password
-      navigate('/set-password');
+      showAlert("Account verified successfully! Welcome to Revise.", "success", 5000);
+      
+      // Redirect to dashboard (Local signup already set a password, no need for set-password page)
+      navigate('/dashboard');
+      
     } catch (error) {
       console.error('OTP Verification failed', error);
-      // Handle error state here
+      showAlert(error.response?.data?.message || 'Verification failed. Please check the code and try again.', 'error');
     } finally {
       setIsVerifying(false);
     }
   };
 
-  const handleResend = () => {
-    console.log('Resending OTP...');
-    // Add logic to call your resend API endpoint
+  const handleResend = async () => {
+    // Double-check to prevent resending if timer hasn't finished
+    if (timeLeft > 0) return;
+
+    setIsResending(true);
+    
+    try {
+      await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/resend-otp`, null, {
+        params: { email }
+      });
+      
+      showAlert("A new verification code has been sent to your email.", "info", 5000);
+      
+      // Reset the timer back to 130 seconds (2m 10s)
+      setTimeLeft(130); 
+    } catch (error) {
+      console.error('Resend failed', error);
+      showAlert(error.response?.data?.message || 'Failed to resend the code. Please try again.', 'error');
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (
@@ -92,7 +160,7 @@ export default function OtpVerify() {
             Check your email
           </h2>
           <p className="text-gray-600 dark:text-gray-400 text-sm">
-            We've sent a 4-digit verification code to your email address. Enter it below to verify your account.
+            We've sent a 4-digit verification code to <span className="font-semibold text-gray-800 dark:text-gray-200">{email}</span>. Enter it below to verify your account.
           </p>
         </div>
 
@@ -134,16 +202,25 @@ export default function OtpVerify() {
           </button>
         </form>
 
-        {/* Resend Option */}
+        {/* Resend Option with Timer */}
         <div className="mt-6 text-center text-sm">
-          <span className="text-gray-600 dark:text-gray-400">Didn't receive the code? </span>
-          <button
-            type="button"
-            onClick={handleResend}
-            className="text-blue-600 dark:text-blue-400 font-medium hover:underline focus:outline-none"
-          >
-            Resend OTP
-          </button>
+          {timeLeft > 0 ? (
+            <span className="text-gray-500 dark:text-gray-400">
+              Resend code in <span className="font-semibold text-blue-600 dark:text-blue-400">{formatTime(timeLeft)}</span>
+            </span>
+          ) : (
+            <>
+              <span className="text-gray-600 dark:text-gray-400">Didn't receive the code? </span>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isResending}
+                className="text-blue-600 dark:text-blue-400 font-medium hover:underline focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isResending ? 'Sending...' : 'Resend OTP'}
+              </button>
+            </>
+          )}
         </div>
 
       </div>

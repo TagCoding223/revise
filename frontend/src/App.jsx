@@ -46,14 +46,14 @@ export default function App() {
                 </PublicRoute>
               } 
             />
-            <Route 
+            {/* <Route 
               path="/verify-otp" 
               element={
                 <PublicRoute>
                   <OtpVerify />
                 </PublicRoute>
               } 
-            />
+            /> */}
 
             {/* <Route 
               path="/set-password" 
@@ -86,6 +86,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <SetPassword />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/verify-otp" 
+              element={
+                <ProtectedRoute>
+                  <OtpVerify />
                 </ProtectedRoute>
               } 
             />
