@@ -6,6 +6,7 @@ import lombok.Data;
 public class AuthResponse {
     private String message;
     private String token; 
+    private String refreshToken;
     private String userId;
 
     // Identifies if the user was just created in the database
