@@ -24,6 +24,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.RequestParam;
+import java.time.LocalDateTime;
+import com.revise.dto.request.TopicSyncRequest;
+
 
 @RestController
 @RequestMapping("/api/v1/topics")
@@ -70,6 +75,54 @@ public class TopicController {
     public ResponseEntity<ApiResponse> reviseAllToday(Principal principal) {
         // Triggers the optimized bulk database update strictly for the authenticated user
         return ResponseEntity.ok(topicService.reviseAllToday(principal.getName()));
+    }
+
+    // --- MOBILE SYNC ENDPOINTS ---
+
+    /**
+     * PULL SYNC: Mobile app requests topics updated since its last sync time.
+     * Expects an ISO Date String: ?since=2026-07-29T10:15:30
+     */
+    @GetMapping("/sync")
+    public ResponseEntity<?> pullSync(
+            @RequestParam("since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since, 
+            Principal principal) {
+        try {
+            List<TopicResponse> updatedTopics = topicService.pullSync(principal.getName(), since);
+            // 200 OK: Returns the array of topics
+            return ResponseEntity.ok(updatedTopics); 
+            
+        } catch (Exception e) {
+            // 500 Internal Server Error: Tells Android WorkManager to retry this task later
+            ApiResponse errorResponse = new ApiResponse(false, "Failed to pull data: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * PUSH SYNC: Mobile app sends a batch of topics modified while offline.
+     */
+    @PostMapping("/sync/batch")
+    public ResponseEntity<ApiResponse> pushSync(
+            @RequestBody List<TopicSyncRequest> offlineTopics, 
+            Principal principal) {
+        
+        // Prevent empty batch requests from wasting server resources
+        if (offlineTopics == null || offlineTopics.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, "No topics provided for sync."));
+        }
+
+        try {
+            ApiResponse response = topicService.pushSync(principal.getName(), offlineTopics);
+            // 200 OK: Sync successful
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            // 500 Internal Server Error: Tells Android WorkManager to retry this task later
+            ApiResponse errorResponse = new ApiResponse(false, "Batch sync failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 
     @GetMapping("/testSecureRoute")
