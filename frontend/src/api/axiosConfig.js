@@ -5,6 +5,9 @@ const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '';
 // Create a custom axios instance
 const api = axios.create({
     baseURL: BACKEND_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json'
+    }
 });
 
 // Request Interceptor: Automatically attach the Access Token to every request
@@ -21,7 +24,10 @@ api.interceptors.request.use(
 
 // Response Interceptor: Catch 401s and silently refresh the token
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // Explicitly return the response so the component 'try' block can continue
+        return response; 
+    },
     async (error) => {
         const originalRequest = error.config;
 

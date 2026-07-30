@@ -131,6 +131,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public AuthResponse verifyOtp(String email, String otp) {
         // 1. Fetch the OTP record 
         VerificationCode storedCode = otpRepository.findByEmail(email)

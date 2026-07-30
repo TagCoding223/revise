@@ -77,7 +77,7 @@ export default function Auth() {
   const onLogin = async (data) => {
     setIsSubmitting(true); // Disable buttons
     try {
-      const response = await api.post(`${BACKEND_BASE_URL}/api/v1/auth/login`, data);
+      const response = await api.post('/api/v1/auth/login', data);
       login(response.data);
       showAlert("Login successful! Welcome back.", "success", 5000);
       navigate('/dashboard');
