@@ -10,10 +10,9 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const logout = () => {
-    localStorage.removeItem('jwt_token');
-    localStorage.removeItem('user_id');
-    
-    delete axios.defaults.headers.common['Authorization'];
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken'); // NEW
+    localStorage.removeItem('user');
     setUser(null);
   };
 
@@ -54,10 +53,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData) => {
-    localStorage.setItem('jwt_token', userData.token);
-    localStorage.setItem('user_id', userData.userId);
-    
-    axios.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`;
+    localStorage.setItem('token', userData.token);
+    localStorage.setItem('refreshToken', userData.refreshToken); // NEW
+    localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
 
