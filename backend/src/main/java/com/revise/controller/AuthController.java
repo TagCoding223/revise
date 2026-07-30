@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.revise.dto.request.GoogleAuthRequest;
 import com.revise.dto.request.LoginRequest;
 import com.revise.dto.request.SignupRequest;
+import com.revise.dto.request.TokenRefreshRequest;
 import com.revise.dto.response.AuthResponse;
 import com.revise.service.AuthService;
 
@@ -49,5 +50,10 @@ public class AuthController {
     // same endpoint use for google auth login and signup and same service also
     public ResponseEntity<AuthResponse> googleAuth(@Valid @RequestBody GoogleAuthRequest request) {
         return ResponseEntity.ok(authService.googleAuth(request));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request));
     }
 }

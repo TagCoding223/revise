@@ -17,8 +17,10 @@ import com.revise.dto.request.CreateUserRequest;
 import com.revise.dto.request.GoogleAuthRequest;
 import com.revise.dto.request.LoginRequest;
 import com.revise.dto.request.SignupRequest;
+import com.revise.dto.request.TokenRefreshRequest;
 import com.revise.dto.response.AuthResponse;
 import com.revise.dto.response.UserResponse;
+import com.revise.entity.RefreshToken;
 import com.revise.entity.User;
 import com.revise.entity.UserCredential;
 import com.revise.entity.VerificationCode;
@@ -27,12 +29,14 @@ import com.revise.exception.ResourceNotFoundException;
 import com.revise.exception.UnauthorizedException;
 import com.revise.exception.UserAlreadyExistsException;
 import com.revise.exception.UserNotVerifiedException;
+import com.revise.repository.RefreshTokenRepository;
 import com.revise.repository.UserCredentialRepository;
 import com.revise.repository.UserRepository;
 import com.revise.repository.VerificationCodeRepository;
 import com.revise.security.JwtTokenProvider;
 import com.revise.service.AuthService;
 import com.revise.service.OtpService;
+import com.revise.service.RefreshTokenService;
 import com.revise.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -51,6 +55,8 @@ public class AuthServiceImpl implements AuthService {
     private final OtpService otpService;
     private final VerificationCodeRepository otpRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     @Transactional
@@ -87,6 +93,7 @@ public class AuthServiceImpl implements AuthService {
         // 5. Return flow response (NO TOKEN ISSUED HERE)
         AuthResponse response = new AuthResponse();
         response.setMessage("Signup successful. Please verify OTP.");
+        response.setRefreshToken(refreshTokenService.createRefreshToken(createdUser.getId()).getToken());
         response.setUserId(createdUser.getId());
         return response;
     }
@@ -118,6 +125,7 @@ public class AuthServiceImpl implements AuthService {
         AuthResponse response = new AuthResponse();
         response.setMessage("Login successful.");
         response.setToken(token);
+        response.setRefreshToken(refreshTokenService.createRefreshToken(user.getId()).getToken());
         response.setUserId(user.getId());
         return response;
     }
@@ -155,6 +163,7 @@ public class AuthServiceImpl implements AuthService {
         AuthResponse response = new AuthResponse();
         response.setMessage("Email verified successfully!");
         response.setToken(token);
+        response.setRefreshToken(refreshTokenService.createRefreshToken(user.getId()).getToken());
         response.setUserId(user.getId());
         return response;
     }
@@ -225,11 +234,31 @@ public class AuthServiceImpl implements AuthService {
             response.setMessage("Google authentication successful.");
             response.setToken(jwt);
             response.setUserId(user.getId());
+            response.setRefreshToken(refreshTokenService.createRefreshToken(user.getId()).getToken());
             
             return response;
 
         } catch (Exception e) {
             throw new UnauthorizedException("Google authentication failed: " + e.getMessage());
         }
+    }
+
+    @Override
+    public AuthResponse refreshToken(TokenRefreshRequest request) {
+        return refreshTokenRepository.findByToken(request.getRefreshToken())
+                .map(refreshTokenService::verifyExpiration)
+                .map(RefreshToken::getUser)
+                .map(user -> {
+                    // Generate a fresh JWT Access Token
+                    String token = jwtTokenProvider.generateToken(user.getId());
+                    
+                    AuthResponse response = new AuthResponse();
+                    response.setMessage("Token refreshed successfully.");
+                    response.setToken(token);
+                    response.setRefreshToken(request.getRefreshToken()); // Send back the same valid refresh token
+                    response.setUserId(user.getId());
+                    return response;
+                })
+                .orElseThrow(() -> new UnauthorizedException("Refresh token is not in database!"));
     }
 }
