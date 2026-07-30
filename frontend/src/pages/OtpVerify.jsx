@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axiosConfig';
 import { useAlert } from '../context/AlertContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -108,7 +108,7 @@ export default function OtpVerify() {
 
     try {
       // Send parameters exactly as Spring Boot's @RequestParam expects
-      const response = await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/verify-otp`, null, {
+      const response = await api.post(`${BACKEND_BASE_URL}/api/v1/auth/verify-otp`, null, {
         params: { email, otp: otpCode }
       });
       
@@ -135,7 +135,7 @@ export default function OtpVerify() {
     setIsResending(true);
     
     try {
-      await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/resend-otp`, null, {
+      await api.post(`${BACKEND_BASE_URL}/api/v1/auth/resend-otp`, null, {
         params: { email }
       });
       

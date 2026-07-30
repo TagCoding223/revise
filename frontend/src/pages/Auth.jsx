@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { GoogleLogin } from '@react-oauth/google';
-import axios from 'axios';
+import api from '../api/axiosConfig';
 import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
 
@@ -77,7 +77,7 @@ export default function Auth() {
   const onLogin = async (data) => {
     setIsSubmitting(true); // Disable buttons
     try {
-      const response = await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/login`, data);
+      const response = await api.post(`${BACKEND_BASE_URL}/api/v1/auth/login`, data);
       login(response.data);
       showAlert("Login successful! Welcome back.", "success", 5000);
       navigate('/dashboard');
@@ -103,7 +103,7 @@ export default function Auth() {
     setIsSubmitting(true); // Disable buttons
     try {
       // 1. Send signup request (Backend now returns NO token here)
-      await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/signup`, data);
+      await api.post(`${BACKEND_BASE_URL}/api/v1/auth/signup`, data);
 
       showAlert("Signup successful! Please check your email for the OTP.", "success", 10000);
 
@@ -121,7 +121,7 @@ export default function Auth() {
     setIsSubmitting(true); // Disable buttons
     try {
       const idToken = credentialResponse.credential;
-      const response = await axios.post(`${BACKEND_BASE_URL}/api/v1/auth/google`, { idToken });
+      const response = await api.post(`${BACKEND_BASE_URL}/api/v1/auth/google`, { idToken });
 
       // 1. Log the user in immediately
       login(response.data);

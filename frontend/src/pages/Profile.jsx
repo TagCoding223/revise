@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axiosConfig';
 import TopLoadingBar from '../components/shared/TopLoadingBar';
 import { useAlert } from '../context/AlertContext';
 
@@ -15,7 +15,7 @@ export default function Profile() {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const response = await axios.get(`${BACKEND_BASE_URL}/api/v1/users/me`);
+                const response = await api.get(`${BACKEND_BASE_URL}/api/v1/users/me`);
                 setProfileData(response.data);
             } catch (error) {
                 console.error("Failed to load profile:", error);

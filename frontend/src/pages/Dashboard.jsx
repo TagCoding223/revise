@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import axios from 'axios';
+import api from '../api/axiosConfig';
 import { TopicCard } from '../components/shared/TopicCard';
 import TopLoadingBar from '../components/shared/TopLoadingBar';
 import { useAlert } from '../context/AlertContext';
@@ -31,7 +31,7 @@ export default function Dashboard() {
     // --- Fetch Topics on Mount ---
     const fetchTopics = async () => {
         try {
-            const response = await axios.get(`${BACKEND_BASE_URL}/api/v1/topics`);
+            const response = await api.get(`${BACKEND_BASE_URL}/api/v1/topics`);
             setTopics(response.data);
         } catch (error) {
             console.error("Failed to load topics:", error);
@@ -51,7 +51,7 @@ export default function Dashboard() {
         setIsProcessingBulk(true);
         setIsReviseAllOpen(false);
         try {
-            const response = await axios.patch(`${BACKEND_BASE_URL}/api/v1/topics/revise-today`);
+            const response = await api.patch(`${BACKEND_BASE_URL}/api/v1/topics/revise-today`);
             showAlert(response.data.message || "All today's topics marked as revised!", "success");
             await fetchTopics(); // Refetch to get updated dates and categories
         } catch (error) {
@@ -63,7 +63,7 @@ export default function Dashboard() {
 
     const handleRevise = async (topicId) => {
         try {
-            await axios.patch(`${BACKEND_BASE_URL}/api/v1/topics/${topicId}/revise`);
+            await api.patch(`${BACKEND_BASE_URL}/api/v1/topics/${topicId}/revise`);
             showAlert("Topic marked as revised! Excellent work.", "success");
             await fetchTopics();
         } catch (error) {
@@ -73,7 +73,7 @@ export default function Dashboard() {
 
     const handleCreateNew = async (newTopicData) => {
         try {
-            await axios.post(`${BACKEND_BASE_URL}/api/v1/topics`, newTopicData);
+            await api.post(`${BACKEND_BASE_URL}/api/v1/topics`, newTopicData);
             showAlert("New topic created successfully.", "success");
             setIsCreateOpen(false);
             await fetchTopics();
@@ -84,7 +84,7 @@ export default function Dashboard() {
 
     const handleUpdate = async (updatedTopicData) => {
         try {
-            await axios.put(`${BACKEND_BASE_URL}/api/v1/topics/${updatedTopicData.id}`, updatedTopicData);
+            await api.put(`${BACKEND_BASE_URL}/api/v1/topics/${updatedTopicData.id}`, updatedTopicData);
             showAlert("Topic updated successfully.", "success");
             setUpdateTopic(null);
             await fetchTopics();
@@ -95,7 +95,7 @@ export default function Dashboard() {
 
     const handleDelete = async (topicId) => {
         try {
-            await axios.delete(`${BACKEND_BASE_URL}/api/v1/topics/${topicId}`);
+            await api.delete(`${BACKEND_BASE_URL}/api/v1/topics/${topicId}`);
             showAlert("Topic deleted successfully.", "success");
             setDeleteTopic(null);
             await fetchTopics();

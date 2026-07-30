@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import axios from 'axios';
+import api from '../api/axiosConfig';
 import { useAlert } from '../context/AlertContext';
 
 // --- Zod Validation Schema ---
@@ -52,7 +52,7 @@ export default function SetPassword() {
     setIsSubmitting(true);
     setIsModalOpen(false); // Close the modal immediately
     try {
-      await axios.post(`${BACKEND_BASE_URL}/api/v1/users/set-password`, { 
+      await api.post(`${BACKEND_BASE_URL}/api/v1/users/set-password`, { 
         password: pendingData.password 
       });
 
