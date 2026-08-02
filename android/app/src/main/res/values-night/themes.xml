@@ -1,7 +1,18 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Revise" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    <!-- Your main application theme -->
+    <style name="Theme.ReviseApp" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Main theme colors go here -->
+    </style>
+
+    <!-- The Modern Splash Screen Theme -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- The background color we defined above -->
+        <item name="windowSplashScreenBackground">@color/splash_bg</item>
+
+        <!-- Center your logo -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_app_logo</item>
+
+        <!-- The theme to switch to once the app is loaded -->
+        <item name="postSplashScreenTheme">@style/Theme.ReviseApp</item>
     </style>
 </resources>
