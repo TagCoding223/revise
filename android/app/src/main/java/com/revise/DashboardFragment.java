@@ -9,6 +9,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DashboardFragment extends Fragment {
 
@@ -37,6 +42,30 @@ public class DashboardFragment extends Fragment {
         view.findViewById(R.id.fabAddTopic).setOnClickListener(v -> {
             Toast.makeText(getContext(), "Open Create Topic Modal", Toast.LENGTH_SHORT).show();
         });
+
+        // --- Demo Data Setup ---
+        List<Topic> todayTopics = new ArrayList<>();
+        todayTopics.add(new Topic("1", "Java Class Loader Subsystem", "Workflow and inner workings of the loading phase. Focus on system environment classpath variable overrides.", 3, "today"));
+        todayTopics.add(new Topic("2", "DBMS Normalization Forms", "Differences between 3NF, 4NF, and 5NF with practical examples of data anomalies.", 1, "today"));
+
+        List<Topic> tomorrowTopics = new ArrayList<>();
+        tomorrowTopics.add(new Topic("3", "Tomcat Servlets & WEB-INF", "Directory structure routing and hidden configuration files behavior when deleted.", 2, "tomorrow"));
+
+        List<Topic> upcomingTopics = new ArrayList<>();
+        upcomingTopics.add(new Topic("4", "Algorithm Design Approaches", "Comparison between greedy, dynamic programming, and divide & conquer strategies.", 5, "other"));
+
+        // --- Wire up RecyclerViews ---
+        RecyclerView rvToday = view.findViewById(R.id.rvToday);
+        rvToday.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvToday.setAdapter(new TopicAdapter(todayTopics));
+
+        RecyclerView rvTomorrow = view.findViewById(R.id.rvTomorrow);
+        rvTomorrow.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvTomorrow.setAdapter(new TopicAdapter(tomorrowTopics));
+
+        RecyclerView rvUpcoming = view.findViewById(R.id.rvUpcoming);
+        rvUpcoming.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvUpcoming.setAdapter(new TopicAdapter(upcomingTopics));
 
         /*
          * Note on Adapter Logic for Active vs Disabled UI:
