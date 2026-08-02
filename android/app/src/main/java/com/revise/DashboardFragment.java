@@ -1,12 +1,17 @@
 package com.revise;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -28,15 +33,48 @@ public class DashboardFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // --- Theme Toggle Logic ---
+        ImageButton btnThemeToggle = view.findViewById(R.id.btnThemeToggle);
+
+        // 1. Check the current active theme
+        int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        boolean isDarkMode = currentNightMode == Configuration.UI_MODE_NIGHT_YES;
+
+        // 2. Set the appropriate icon
+        if (isDarkMode) {
+            btnThemeToggle.setImageResource(R.drawable.ic_theme_light); // Show Sun in Dark Mode
+        } else {
+            btnThemeToggle.setImageResource(R.drawable.ic_theme_dark);  // Show Moon in Light Mode
+        }
+
+        // 3. Handle the click event to switch themes
+        btnThemeToggle.setOnClickListener(v -> {
+            SharedPreferences prefs = requireActivity().getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+
+            if (isDarkMode) {
+                // Switch to Light Mode
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                editor.putInt("ThemeMode", AppCompatDelegate.MODE_NIGHT_NO);
+            } else {
+                // Switch to Dark Mode
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                editor.putInt("ThemeMode", AppCompatDelegate.MODE_NIGHT_YES);
+            }
+
+            // Save the preference
+            editor.apply();
+
+            // Note: setDefaultNightMode automatically recreates the Activity to apply the new colors instantly.
+        });
+
         // Header Buttons
         view.findViewById(R.id.btnProfile).setOnClickListener(v -> {
             // Navigate to Profile Fragment (To be created)
+            Toast.makeText(getContext(), "Profile clicked", Toast.LENGTH_SHORT).show();
         });
 
-        view.findViewById(R.id.btnThemeToggle).setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Theme toggle clicked", Toast.LENGTH_SHORT).show();
-            // Handle Android DayNight theme switching here
-        });
+
 
         // Add New Topic Button
         view.findViewById(R.id.fabAddTopic).setOnClickListener(v -> {

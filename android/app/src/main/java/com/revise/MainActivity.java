@@ -1,8 +1,10 @@
 package com.revise;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
@@ -11,6 +13,14 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Force a smooth crossfade animation when the Activity is recreated for theme changes
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+
+        // Load the saved theme preference BEFORE installing the splash screen or layout
+        SharedPreferences prefs = getSharedPreferences("ThemePrefs", MODE_PRIVATE);
+        int themeMode = prefs.getInt("ThemeMode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        AppCompatDelegate.setDefaultNightMode(themeMode);
+
         // 1. Install the splash screen BEFORE super.onCreate()
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
 
