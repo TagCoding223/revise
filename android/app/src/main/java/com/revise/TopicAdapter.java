@@ -14,11 +14,20 @@ import com.google.android.material.card.MaterialCardView;
 import java.util.List;
 
 public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHolder> {
-
+    // Create an interface to handle clicks
+    public interface OnTopicClickListener {
+        void onViewClick(Topic topic);
+        void onEditClick(Topic topic);
+        void onDeleteClick(Topic topic);
+        void onReviseClick(Topic topic);
+    }
     private final List<Topic> topicList;
+    private final OnTopicClickListener listener; //  Add the listener variable
 
-    public TopicAdapter(List<Topic> topicList) {
+    // Update constructor to require the listener
+    public TopicAdapter(List<Topic> topicList, OnTopicClickListener listener) {
         this.topicList = topicList;
+        this.listener = listener;
     }
 
     @NonNull
@@ -47,15 +56,15 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
             // Active state
             holder.cardContainer.setAlpha(1.0f);
             holder.btnRevise.setEnabled(true);
+            holder.btnRevise.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#2563EB"))); // Primary blue
+            holder.btnRevise.setTextColor(Color.WHITE);
         }
 
-        // Mock Click Listeners
-        holder.btnRevise.setOnClickListener(v ->
-                Toast.makeText(v.getContext(), "Revise clicked for " + topic.getTitle(), Toast.LENGTH_SHORT).show()
-        );
-        holder.btnView.setOnClickListener(v ->
-                Toast.makeText(v.getContext(), "View clicked", Toast.LENGTH_SHORT).show()
-        );
+        // Wire the buttons to the listener interface instead of Toasts
+        holder.btnView.setOnClickListener(v -> listener.onViewClick(topic));
+        holder.btnEdit.setOnClickListener(v -> listener.onEditClick(topic));
+        holder.btnDelete.setOnClickListener(v -> listener.onDeleteClick(topic));
+        holder.btnRevise.setOnClickListener(v -> listener.onReviseClick(topic));
     }
 
     @Override
