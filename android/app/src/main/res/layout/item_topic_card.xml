@@ -87,7 +87,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_view"
+                app:srcCompat="@drawable/ic_view"
                 app:tint="@color/text_secondary" />
 
             <ImageButton
@@ -95,7 +95,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_edit"
+                app:srcCompat="@drawable/ic_edit"
                 app:tint="@color/text_secondary" />
 
             <ImageButton
@@ -103,7 +103,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_delete"
+                app:srcCompat="@drawable/ic_delete"
                 app:tint="@color/text_secondary" />
         </LinearLayout>
 
