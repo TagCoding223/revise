@@ -41,4 +41,7 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.espresso.core
     androidTestImplementation libs.ext.junit
+
+//    Import Dependencies they we need
+    implementation 'androidx.core:core-splashscreen:1.0.1' // import SplashScreen API for set up a highly responsive, modern Splash Screen with full Light and Dark mode support in Java and Android Studio.
 }
