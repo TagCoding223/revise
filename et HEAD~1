@@ -1,0 +1,156 @@
+[33m3e65ca4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m (android) Add Jetpack Navigation Component Dependencies
+[33m16fb3f6[m (android) Add Jetpack Navigation Component Dependencies
+[33mc9b7190[m (android) Intregate App Logo
+[33mb95480e[m (android) Intregate SplashScreen on MainActivity
+[33mdbdd781[m (android) Update the AndroidManifest.xml Tell the Android system to use this new launch theme when the app starts.
+[33mf985f07[m (android) Modify themes to implement Spalsh
+[33maff1145[m (android) Add theme background for light mode and dark mode
+[33m868a5c1[m (android) Add SplashScreen API dependencies in build.gradle
+[33m81eb53a[m (android) Initialize Android App
+[33m83d9687[m (frontend) Resolve axiosConfig 401 and login wrong password 401 conflict
+[33m98e46a4[m (backend) Fix classic Hibernate Action Queue gotcha! for Refresh Token
+[33mfbd5d80[m (backend) Change axios to api while calling request
+[33me65e595[m (backend) Update login and logout functions in AuthContext
+[33m402b43b[m (backend) axiosConfig to include refresh and access token with each request interceptors
+[33me385774[m (backend) Implement Refresh Token in Complete App where user logged in to pass refresh token to frontend
+[33m681bfad[m (backend) Add refresh token in Auth Response
+[33mb59fad6[m (backend) Token Refresh Request
+[33mfbc6503[m (backend) RefreshTokenService Creation
+[33m580392a[m (backend) Refresh Token Repository
+[33ma958574[m (backend) RefreshToken Entity
+[33m011caaa[m (backendA) Create Pull and Push Sync endpoint in Topic Controller
+[33m946ac10[m (backendA) Create Pull and Push Sync logic for TopicService
+[33m2a6ed84[m (backendA) Create TopicSync Dto Request for android
+[33meed29a0[m (backendFA) Add a custom method in topic respositoy to get specific topic base on after time
+[33m7bc076b[m (backend) Remove unused imports and increase Space Repetition Interval(SRI)
+[33m497e8e9[m (frontend) Create Legal.jsx
+[33m2bc7634[m (frontend) Update UI and add confrimation modal
+[33mf1f018c[m (frontend) Modify Profile UI
+[33m2b4e450[m (backend) Make backend endpoint, service logic and Dto response for profile
+[33m92ae319[m (frontend) Create Profile.jsx and list in App.jsx as a Protected Route
+[33m6b4653c[m (frontend) change Profile icon of navbar as a div to link
+[33m033fada[m (frontend) Add User Profile and Logout button in Navbar
+[33m469329b[m (frontend) Fix UI of buttons and User Interacted components
+[33m576bb6c[m (frontend) Make Revise All Today Confonfrimation Modal and use in Dashboard
+[33m2a1c1ff[m (frontend) Add actual api calls in Dashboard.jsx
+[33m73d3980[m (backend) Add endpoint for revise all today
+[33m5e2c3d5[m (backend) Add Revise Today All Feature
+[33m3a1116f[m (frontend) Fix UI/UX to prevent multiple clicks on signup and login button
+[33mfb2452b[m (frontend) fix in App.jsx to define public and protected routes
+[33md12f8fb[m (backend) fix googleAuth in AuthServiceImpl to fix auth flow and improve comments
+[33m599723a[m (frontend) fix handleGoogleSuccess and onSignUp function of Auth.jsx
+[33m7f7ab7b[m (frontend) Change the protected route to fix auth flow
+[33m6c82957[m (frontend) Delete markPasswordSet to implement and fix auth flow
+[33m3e17a01[m (frontend) Define axios interceptor for jwt token exprie and backend reject the request
+[33m107bd35[m (backend) fix google signup user login with google login without password set
+[33m9975463[m (backend) Improve login logic in AuthServiceImpl for all edge case
+[33mdf9d474[m (backend) Create UserNotVerifiedException for mail not verified users
+[33m51b02c0[m (frontend) Modify OtpVerify.jsx to use showAlert and implement backend calls
+[33mf2ee619[m (frontend) Modify onSignup in Auth.jsx to pass email in verify-otp
+[33m1e4a1f1[m (frontend) Use ShowAlert on SetPassword.jsx
+[33md7b21f3[m (frontend) Replace authError with showAlert Component in Auth.jsx
+[33mb7c58b1[m (frontend) Create AlertContext.jsx and wrap the application in AlertProvider
+[33m38c6289[m (frontend) Create Alert.jsx and add custom animation in index.css
+[33m7f66fd1[m (frontend) fix SetPassword Workflow
+[33m767dc5a[m (frontend && backend) fix bugs
+[33m4f7d26c[m (frontend) Update PublicRoute to fix navigatation for new google user
+[33m4c06b2c[m (frontend) Create logic of onSubmit in SetPassword.jsx
+[33mdd0c1ee[m (frontend) Update Auth.jsx to select route
+[33m4cd30af[m (backend) Create set-password endpoint and block others.
+[33m533ee61[m (backend) Add setPassword service in UserService and Implement there logic in DefualtUserService
+[33mf9df526[m (backend) Update googleAuth method in AuthServiceImpl to track a new user by google signup
+[33m6e6b1aa[m (backend) Modify AuthResponse and Create SetPasswordRequest DTO for check user password is set or not, and for set new one
+[33mc7a19b1[m (frontend) Minor changes in SetPassword.jsx and App.jsx
+[33m2a51d32[m (frontend) Fix bugs for google login in Auth.jsx and AuthContext.jsx
+[33m8aabe8b[m (backend) Create CorsConfig to allow cors origin access
+[33mfd8fd60[m (frontend) Add Logic of google auth in Auth.jsx and AuthContext.jsx
+[33mc4323ec[m (frontend) install @react-oauth/google and wrap the app in GoogleOAuthProvider
+[33m0d273b0[m (backend) Add Google Auth
+[33m60c5c77[m (backend) Create GoogleAuthRequest DTO
+[33m4538f31[m (backend) add dependency for google auth in pom.xml
+[33mb59ce55[m (backend) add validation Constraints for Topic create and update
+[33md0a28e1[m (backend) add the @Valid annotation to the method parameters in your AuthController and change a method name remove just 'Entity' from resendOtp.
+[33m9881b98[m (backend) Add Validation Constraints to DTOs
+[33meec7022[m (backend) Create MarkAsRevision service logic and endpoint
+[33mba5c176[m (backend) Create deleteTopic Service and endpoint for revision topics
+[33mf7f84f8[m (backend) Create getAllTopics Service and endpoint for specific user revision topics
+[33m716b6c7[m (backend) Create getTopivById Service logic and endpoint
+[33m6fe41ea[m (backend) Create logic of updateTopic service and endpoint in Controller
+[33mb6b2723[m (backend) Create JwtAuthenticationEntryPoint and SecurityConfig
+[33mc3efd9b[m (backend) Create createTopic endpoint in TopicController
+[33mcb6a0d0[m (backend) Create createTopic Service and mapToResponse Helper
+[33me409da4[m (backend) Create TopicService Interface
+[33m1ae4386[m (backend) Create Topic Request and Response DTO
+[33m6050f17[m (backend) Create TopicRepository
+[33m6b5c39f[m (backend) Create RevisionTopic Entity
+[33mc739534[m (backend) add a future Todo
+[33me5fe022[m (backend) Handle Jwt Exception in correct response format
+[33m0cb29fe[m (backend) Implement Jwt token in Spring Security
+[33m2ed49a2[m (backend) Create JwtAuthenticationFilter
+[33m0f568e0[m (backend) Create CustomUserDetailsService
+[33mc6986a3[m (backend) create test secure endpoint to check spring security know jwt or not.
+[33maaf0d1d[m (backend) Add Jwt Token on verifyOtp service
+[33m4695ed1[m (backend) Create Logic of Login service in AuthServiceImpl
+[33m2a1d700[m (backend) handle UnauthorizedException
+[33mb68d0a6[m (backend) Create Unauthorized Custom Exception for bad password.
+[33m0d21ee1[m (backend) Create JwtTokenProvider Component
+[33m59484a4[m (backend) Add Jwt Dependencies in pom.xml
+[33mf186495[m (backend) Create resendOtp endpoint and method in AuthService
+[33m7e2dcbb[m (backend) Create resendOtp Service
+[33m48a92fe[m (backend) fix bug on GlobalExceptionHandler for ResourceNotFoundException
+[33ma9e49ad[m (backend) Build verifyOtp service.
+[33m882319f[m (backend) Create Handler for InvaildOtpException and ResourceNotFoundException
+[33m15d2cdd[m Create Custom exception
+[33m036ee3f[m (backend) correct directory of GlobalExceptionHandler and minor changes in VerificationCodeRepository
+[33mc54f8da[m (backend) Add resend sdk api keys and test email sending service.
+[33m139873f[m (backend) implement otp service in signup
+[33m0e9db8c[m (backend) Create OtpService
+[33m9a12ed1[m (backend) Create Email Service and add Resend in pom.xml
+[33m2c1cb7a[m (backend) Create VerificationCodeRepository
+[33m39f6d88[m (backend) create VerificationCode entity.
+[33m08f6ee6[m (backend) add isEmailVerified flag on User Entity.
+[33mc5e69b5[m create GlobalExceptionHandler
+[33m3488e9c[m (backend) Create a generic API response DTO
+[33mb3342b6[m (backend) define user exist logic in signup method of AuthServiceImpl
+[33m993a08c[m (backend) Create custom exception for signup user already exist
+[33m5eb4043[m (backend) Implement existByEmail in UserRepository
+[33m73ce4d2[m (backend) Profile and Default Spring Security Password Override
+[33m4e338f9[m Create SecurityConfig
+[33m72050e2[m (backend) Implement password hashing in signup service
+[33m1aa3ec7[m (backend) Create AppConfig and create passwordEncoder Bean
+[33m395db0e[m (backend) Implement dummy verify-otp service and define login endpoint in AuthController
+[33md7188f8[m (backend) Define login endpoint in AuthController
+[33mebac282[m (backend) Implement dummy login service
+[33mc1c161c[m (backend) Define signup endpoint on AuthController
+[33m0321d07[m (backend) Implement signup service by defining bussines logic
+[33mc4d3c85[m UserCredential Repository and UserCredential service
+[33m58a0a4c[m (backend) Define response DTO for Authentication
+[33m665662e[m (backend) Define Request DTO for Authentication
+[33m593f63c[m (backend) Define UserCredential Entity
+[33m730512e[m (backend) add getAllUser endpoint and define CacheControl Rules.
+[33mde3b286[m (backend) add getUserById endpoint.
+[33m55c0648[m (backend) add createUser endpoint in UserController to check user creation servies, dto and repository
+[33m73dd132[m UserAuthService
+[33m7d62ad9[m UserService
+[33m2aa77c5[m dto for UserResponse
+[33m72330e8[m dto request for CreateUserRequest
+[33me44de7d[m user repository
+[33md0b4166[m initial api testing
+[33m7fd0b5d[m (backend) add Actuator and config there endpoints
+[33m025e768[m add .gitignore on root directory
+[33m5fe4610[m Initialize backend and set application.properties
+[33mdaea32d[m Applu dates of last and next revision in revision card.
+[33mc32f195[m Apply lazy loading on dasahboard components
+[33mae338da[m Design Dashboard and its components
+[33m9782a05[m fix design issue on auth.jsx
+[33md4f9d16[m design SetPassword page
+[33m7f946be[m design OtpVerify page
+[33m0c9147f[m Auth
+[33m0fda1f5[m Static SEO and Dynamic SEO
+[33m7cc80fb[m remove index.css predefine properties to fix bugs in landing page
+[33m0eded1f[m create landing page, include it to app, create TopLoadingBar, add custom animation, and apply react lazy loading
+[33m1dd5594[m apply dark theme at base lavel
+[33m8c67f4d[m eanble tailwind dark theme
+[33m4e90f9b[m install recat-router-dom and tailwind
+[33m8aa068b[m Navbar component, Theme and Auth Context
+[33mb0e5e63[m frontend initialized.
