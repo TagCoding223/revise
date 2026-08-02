@@ -48,14 +48,23 @@ public class VerifyOtpFragment extends Fragment {
         tvTimer = view.findViewById(R.id.tvTimer);
         tvResend = view.findViewById(R.id.tvResend);
 
+        // NEW: Find the email display TextView
+        TextView tvEmailDisplay = view.findViewById(R.id.tvEmailDisplay);
+
+        // NEW: Retrieve the email from the Bundle and display it
+        String passedEmail = "";
+        if (getArguments() != null) {
+            passedEmail = getArguments().getString("USER_EMAIL", "your email address");
+        }
+        tvEmailDisplay.setText(passedEmail);
+
         setupOtpInputs();
         startTimer();
 
         // Handle Resend Click
         tvResend.setOnClickListener(v -> {
-            // Trigger your API call here
             Toast.makeText(getContext(), "A new code has been sent.", Toast.LENGTH_SHORT).show();
-            startTimer(); // Restart the timer
+            startTimer();
         });
 
         // Handle Verify Click
@@ -67,7 +76,6 @@ public class VerifyOtpFragment extends Fragment {
                 Toast.makeText(getContext(), "Please enter all 4 digits", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(getContext(), "Verifying: " + otpCode, Toast.LENGTH_SHORT).show();
-                // Add Retrofit API verification call here later
             }
         });
     }
