@@ -1,6 +1,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Your main application theme -->
     <style name="Theme.ReviseApp" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Add this line to force dark icons in the status bar for light mode -->
+        <item name="android:windowLightStatusBar">true</item>
         <!-- Main theme colors go here -->
     </style>
 
