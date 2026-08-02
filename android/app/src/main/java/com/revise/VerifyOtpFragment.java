@@ -15,6 +15,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import java.util.Locale;
 
@@ -76,6 +77,10 @@ public class VerifyOtpFragment extends Fragment {
                 Toast.makeText(getContext(), "Please enter all 4 digits", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(getContext(), "Verifying: " + otpCode, Toast.LENGTH_SHORT).show();
+
+                // TODO: Add actual Retrofit API call here later.
+                // For now, simulate a successful verification and navigate to Dashboard:
+                Navigation.findNavController(view).navigate(R.id.action_verifyOtpFragment_to_dashboardFragment);
             }
         });
     }
