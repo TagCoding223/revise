@@ -36,5 +36,10 @@ public class SignupFragment extends Fragment {
             // Using the action we defined in nav_graph.xml to ensure the back stack clears properly
             Navigation.findNavController(view).navigate(R.id.action_signupFragment_to_loginFragment);
         });
+
+        // Navigate to Verify OTP when Signup button is clicked
+        view.findViewById(R.id.btnSignup).setOnClickListener(v -> {
+            Navigation.findNavController(view).navigate(R.id.action_signupFragment_to_verifyOtpFragment);
+        });
     }
 }
