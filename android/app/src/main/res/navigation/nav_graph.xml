@@ -43,5 +43,21 @@
         android:id="@+id/verifyOtpFragment"
         android:name="com.revise.VerifyOtpFragment"
         android:label="Verify OTP"
-        tools:layout="@layout/fragment_verify_otp" />
+        tools:layout="@layout/fragment_verify_otp" >
+
+        <!-- Action to travel from OTP to Dashboard -->
+        <!-- PopUpTo loginFragment (inclusive="true") clears the auth screens from memory -->
+        <action
+            android:id="@+id/action_verifyOtpFragment_to_dashboardFragment"
+            app:destination="@id/dashboardFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <!-- Dashboard Screen -->
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="com.revise.DashboardFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_dashboard" />
 </navigation>
