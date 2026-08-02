@@ -31,6 +31,17 @@
             app:destination="@id/loginFragment"
             app:popUpTo="@id/loginFragment"
             app:popUpToInclusive="true" />
+
+        <!-- Action to travel from Signup to Verify OTP -->
+        <action
+            android:id="@+id/action_signupFragment_to_verifyOtpFragment"
+            app:destination="@id/verifyOtpFragment" />
     </fragment>
 
+    <!-- Verify OTP Screen -->
+    <fragment
+        android:id="@+id/verifyOtpFragment"
+        android:name="com.revise.VerifyOtpFragment"
+        android:label="Verify OTP"
+        tools:layout="@layout/fragment_verify_otp" />
 </navigation>
