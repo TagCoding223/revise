@@ -42,6 +42,11 @@ dependencies {
     androidTestImplementation libs.espresso.core
     androidTestImplementation libs.ext.junit
 
-//    Import Dependencies they we need
+    // Import Dependencies they we need
     implementation 'androidx.core:core-splashscreen:1.0.1' // import SplashScreen API for set up a highly responsive, modern Splash Screen with full Light and Dark mode support in Java and Android Studio.
+
+    // Jetpack Navigation Component
+    def nav_version = "2.7.7"
+    implementation "androidx.navigation:navigation-fragment:$nav_version"
+    implementation "androidx.navigation:navigation-ui:$nav_version"
 }
