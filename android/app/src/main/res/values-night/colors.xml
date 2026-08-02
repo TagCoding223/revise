@@ -2,4 +2,11 @@
 <resources>
     <!-- A deep navy/slate blue that matches the dark edge of your logo -->
     <color name="splash_bg">#0F172A</color>
+
+    <color name="primary_blue">#3B82F6</color>
+    <color name="background_color">#0F172A</color> <!-- Deep navy -->
+    <color name="surface_glass">#1E293B</color> <!-- Slightly lighter navy for glass effect -->
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="stroke_color">#334155</color>
 </resources>

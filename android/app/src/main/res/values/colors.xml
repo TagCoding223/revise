@@ -3,6 +3,12 @@
 
     <!-- A crisp, slightly cool off-white (light theme) -->
     <color name="splash_bg">#F8FAFC</color>
+    <color name="primary_blue">#2563EB</color>
+    <color name="background_color">#F8FAFC</color> <!-- Light grayish blue -->
+    <color name="surface_glass">#FFFFFF</color> <!-- Solid white for light mode card -->
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#64748B</color>
+    <color name="stroke_color">#E2E8F0</color>
 
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
