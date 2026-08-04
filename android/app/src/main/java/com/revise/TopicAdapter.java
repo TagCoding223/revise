@@ -60,7 +60,7 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
             holder.btnRevise.setTextColor(Color.WHITE);
         }
 
-        // Wire the buttons to the listener interface instead of Toasts
+        // 4. Wire the buttons to the listener interface instead of Toasts
         holder.btnView.setOnClickListener(v -> listener.onViewClick(topic));
         holder.btnEdit.setOnClickListener(v -> listener.onEditClick(topic));
         holder.btnDelete.setOnClickListener(v -> listener.onDeleteClick(topic));
