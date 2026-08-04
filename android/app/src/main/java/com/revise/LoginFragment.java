@@ -10,28 +10,93 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.material.textfield.TextInputEditText;
+import com.revise.dto.request.LoginRequest;
+import com.revise.dto.response.AuthResponse;
+import com.revise.network.AuthApiService;
+import com.revise.network.RetrofitClient;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class LoginFragment extends Fragment {
 
-    public LoginFragment() {
-        // Required empty public constructor
-    }
+    private TextInputEditText etEmail, etPassword;
+    private AuthApiService apiService;
+
+    public LoginFragment() {}
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_login, container, false);
     }
 
-    // We wire up our buttons in onViewCreated after the XML is fully inflated
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        TextView tvSignupLink = view.findViewById(R.id.tvSignupLink);
+        etEmail = view.findViewById(R.id.etEmail);
+        etPassword = view.findViewById(R.id.etPassword);
 
-        // Navigate to SignupFragment when clicked
-        tvSignupLink.setOnClickListener(v -> Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_signupFragment));
+        // Initialize API Service
+        apiService = RetrofitClient.getClient().create(AuthApiService.class);
+
+        view.findViewById(R.id.tvSignupLink).setOnClickListener(v ->
+                Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_signupFragment)
+        );
+
+        view.findViewById(R.id.btnLogin).setOnClickListener(v -> attemptLogin(view));
+    }
+
+    private void attemptLogin(View view) {
+        String email = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
+        String password = etPassword.getText() != null ? etPassword.getText().toString().trim() : "";
+
+        // 1. Local Form Validation
+        if (email.isEmpty() || password.isEmpty()) {
+            Toast.makeText(getContext(), "All fields are required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Disable button/show loading spinner here if desired
+
+        // 2. Prepare the DTO
+        LoginRequest request = new LoginRequest(email, password);
+
+        // 3. Execute Async Network Call
+        apiService.login(request).enqueue(new Callback<AuthResponse>() {
+            @Override
+            public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    AuthResponse authData = response.body();
+
+                    Toast.makeText(getContext(), "Welcome back!", Toast.LENGTH_SHORT).show();
+
+                    // TODO: Save the JWT token (authData.getToken()) securely
+
+                    // Navigate to Dashboard
+                    Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_dashboardFragment);
+                } else {
+                    // Handle 401 Unauthorized or 403 Forbidden
+                    if (response.code() == 403) {
+                        Toast.makeText(getContext(), "Email unverified. Redirecting...", Toast.LENGTH_LONG).show();
+
+                        // Navigate to OTP Fragment
+                    } else {
+                        Toast.makeText(getContext(), "Login Failed: Invalid credentials", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AuthResponse> call, Throwable t) {
+                // Handles no internet or server down
+                Toast.makeText(getContext(), "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
