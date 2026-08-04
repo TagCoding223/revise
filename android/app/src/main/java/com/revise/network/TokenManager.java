@@ -2,6 +2,7 @@ package com.revise.network;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKey;
@@ -42,6 +43,11 @@ public class TokenManager {
                 .putString(KEY_REFRESH_TOKEN, refreshToken)
                 .putString(KEY_USER_ID, userId)
                 .apply();
+
+        // TODO: Remove the logs
+        Log.d("AuthTokens", "Access Token: " + sharedPreferences.getString(KEY_ACCESS_TOKEN, "null"));
+        Log.d("AuthTokens", "Refresh Token: " + sharedPreferences.getString(KEY_REFRESH_TOKEN, "null"));
+        Log.d("AuthTokens", "User Id: " + sharedPreferences.getString(KEY_USER_ID, "null"));
     }
 
     public String getUserId() {

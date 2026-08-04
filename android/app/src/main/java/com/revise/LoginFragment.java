@@ -17,6 +17,7 @@ import com.revise.dto.request.LoginRequest;
 import com.revise.dto.response.AuthResponse;
 import com.revise.network.AuthApiService;
 import com.revise.network.RetrofitClient;
+import com.revise.network.TokenManager;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -76,7 +77,20 @@ public class LoginFragment extends Fragment {
 
                     Toast.makeText(getContext(), "Welcome back!", Toast.LENGTH_SHORT).show();
 
-                    // TODO: Save the JWT token (authData.getToken()) securely
+                    // Save the JWT token (authData.getToken()) securely
+                    // Initialize TokenManger
+                    TokenManager tokenManager = new TokenManager(requireContext());
+
+                    // Save the tokens
+                    // Note: Since our Spring Boot backend doesn't send a Refresh Token yet,
+                    // we will pass a placeholder string "dummy_refresh_token" for now.
+                    tokenManager.saveToken(
+                            authData.getToken(),
+                            authData.getRefreshToken(),
+                            authData.getUserId()
+                    );
+
+                    Toast.makeText(getContext(), "Welcome back!", Toast.LENGTH_SHORT).show();
 
                     // Navigate to Dashboard
                     Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_dashboardFragment);
