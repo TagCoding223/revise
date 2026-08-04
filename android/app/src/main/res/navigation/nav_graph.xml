@@ -59,5 +59,31 @@
         android:id="@+id/dashboardFragment"
         android:name="com.revise.DashboardFragment"
         android:label="Dashboard"
-        tools:layout="@layout/fragment_dashboard" />
+        tools:layout="@layout/fragment_dashboard" >
+
+        <!-- Action to go to Profile -->
+        <action
+            android:id="@+id/action_dashboardFragment_to_profileFragment"
+            app:destination="@id/profileFragment" />
+    </fragment>
+
+    <!-- Profile Screen -->
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.revise.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile">
+
+        <!-- Action to go to Set Password -->
+        <action
+            android:id="@+id/action_profileFragment_to_setPasswordFragment"
+            app:destination="@id/setPasswordFragment" />
+    </fragment>
+
+    <!-- Set Password Screen -->
+    <fragment
+        android:id="@+id/setPasswordFragment"
+        android:name="com.revise.SetPasswordFragment"
+        android:label="Set Password"
+        tools:layout="@layout/fragment_set_password" />
 </navigation>
