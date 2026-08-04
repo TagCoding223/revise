@@ -2,6 +2,13 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+// Load the local.properties file
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
+}
+
 android {
     namespace 'com.revise'
     compileSdk {
@@ -18,6 +25,14 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Inject the property as a BuildConfig field
+        buildConfigField "String", "API_BASE_URL", localProperties.getProperty("API_BASE_URL", "\"http://10.231.229.52:8080/\"")
+    }
+
+    buildFeatures {
+        // Enable BuildConfig generation
+        buildConfig true
     }
 
     buildTypes {
