@@ -43,7 +43,7 @@ public class LoginFragment extends Fragment {
         etPassword = view.findViewById(R.id.etPassword);
 
         // Initialize API Service
-        apiService = RetrofitClient.getClient().create(AuthApiService.class);
+        apiService = RetrofitClient.getClient(requireContext()).create(AuthApiService.class);
 
         view.findViewById(R.id.tvSignupLink).setOnClickListener(v ->
                 Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_signupFragment)
