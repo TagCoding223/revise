@@ -1,4 +1,4 @@
-package com.revise;
+package com.revise.ui.profile;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+
+import com.revise.R;
 
 public class ProfileFragment extends Fragment {
 

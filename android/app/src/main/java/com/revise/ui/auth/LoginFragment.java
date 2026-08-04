@@ -1,4 +1,4 @@
-package com.revise;
+package com.revise.ui.auth;
 
 import android.os.Bundle;
 
@@ -9,10 +9,11 @@ import androidx.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.revise.R;
 import com.revise.dto.request.LoginRequest;
 import com.revise.dto.response.AuthResponse;
 import com.revise.network.AuthApiService;
@@ -26,6 +27,7 @@ import retrofit2.Response;
 public class LoginFragment extends Fragment {
 
     private TextInputEditText etEmail, etPassword;
+    private MaterialButton btnLogin;
     private AuthApiService apiService;
 
     public LoginFragment() {}
@@ -42,6 +44,7 @@ public class LoginFragment extends Fragment {
 
         etEmail = view.findViewById(R.id.etEmail);
         etPassword = view.findViewById(R.id.etPassword);
+        btnLogin = view.findViewById(R.id.btnLogin);
 
         // Initialize API Service
         apiService = RetrofitClient.getClient(requireContext()).create(AuthApiService.class);
@@ -63,7 +66,9 @@ public class LoginFragment extends Fragment {
             return;
         }
 
-        // Disable button/show loading spinner here if desired
+        // TODO: Disable button/show loading spinner here if desired
+        btnLogin.setEnabled(false);
+        btnLogin.setText("Please Wait...");
 
         // 2. Prepare the DTO
         LoginRequest request = new LoginRequest(email, password);
@@ -82,7 +87,6 @@ public class LoginFragment extends Fragment {
                     TokenManager tokenManager = new TokenManager(requireContext());
 
                     // Save the tokens
-                    // Note: Since our Spring Boot backend doesn't send a Refresh Token yet,
                     // we will pass a placeholder string "dummy_refresh_token" for now.
                     tokenManager.saveToken(
                             authData.getToken(),
@@ -99,7 +103,7 @@ public class LoginFragment extends Fragment {
                     if (response.code() == 403) {
                         Toast.makeText(getContext(), "Email unverified. Redirecting...", Toast.LENGTH_LONG).show();
 
-                        // Navigate to OTP Fragment
+                        // TODO: Navigate to OTP Fragment
                     } else {
                         Toast.makeText(getContext(), "Login Failed: Invalid credentials", Toast.LENGTH_SHORT).show();
                     }

@@ -1,4 +1,4 @@
-package com.revise;
+package com.revise.model;
 
 public class Topic {
     private String id;

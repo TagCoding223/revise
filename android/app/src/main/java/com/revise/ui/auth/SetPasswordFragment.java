@@ -1,4 +1,4 @@
-package com.revise; // Ensure this matches your package
+package com.revise.ui.auth; // Ensure this matches your package
 
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -12,6 +12,7 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.revise.R;
 
 public class SetPasswordFragment extends Fragment {
 

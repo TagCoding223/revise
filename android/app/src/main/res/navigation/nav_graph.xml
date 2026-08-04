@@ -8,7 +8,7 @@
     <!-- Login Screen -->
     <fragment
         android:id="@+id/loginFragment"
-        android:name="com.revise.LoginFragment"
+        android:name="com.revise.ui.auth.LoginFragment"
         android:label="Login"
         tools:layout="@layout/fragment_login">
 
@@ -26,7 +26,7 @@
     <!-- Signup Screen -->
     <fragment
         android:id="@+id/signupFragment"
-        android:name="com.revise.SignupFragment"
+        android:name="com.revise.ui.auth.SignupFragment"
         android:label="Signup"
         tools:layout="@layout/fragment_signup">
 
@@ -46,7 +46,7 @@
     <!-- Verify OTP Screen -->
     <fragment
         android:id="@+id/verifyOtpFragment"
-        android:name="com.revise.VerifyOtpFragment"
+        android:name="com.revise.ui.auth.VerifyOtpFragment"
         android:label="Verify OTP"
         tools:layout="@layout/fragment_verify_otp" >
 
@@ -62,7 +62,7 @@
     <!-- Dashboard Screen -->
     <fragment
         android:id="@+id/dashboardFragment"
-        android:name="com.revise.DashboardFragment"
+        android:name="com.revise.ui.dashboard.DashboardFragment"
         android:label="Dashboard"
         tools:layout="@layout/fragment_dashboard" >
 
@@ -75,7 +75,7 @@
     <!-- Profile Screen -->
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.revise.ProfileFragment"
+        android:name="com.revise.ui.profile.ProfileFragment"
         android:label="Profile"
         tools:layout="@layout/fragment_profile">
 
@@ -88,7 +88,7 @@
     <!-- Set Password Screen -->
     <fragment
         android:id="@+id/setPasswordFragment"
-        android:name="com.revise.SetPasswordFragment"
+        android:name="com.revise.ui.auth.SetPasswordFragment"
         android:label="Set Password"
         tools:layout="@layout/fragment_set_password" />
 </navigation>

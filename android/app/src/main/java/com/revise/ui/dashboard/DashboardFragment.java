@@ -1,4 +1,4 @@
-package com.revise;
+package com.revise.ui.dashboard;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -24,6 +24,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.revise.R;
+import com.revise.model.Topic;
 
 import java.util.ArrayList;
 import java.util.List;

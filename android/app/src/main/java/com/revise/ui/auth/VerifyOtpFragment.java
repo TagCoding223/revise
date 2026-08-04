@@ -1,4 +1,4 @@
-package com.revise;
+package com.revise.ui.auth;
 
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -16,6 +16,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+
+import com.revise.R;
 
 import java.util.Locale;
 
