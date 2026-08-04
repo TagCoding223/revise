@@ -76,10 +76,9 @@ public class DashboardFragment extends Fragment {
             // Note: setDefaultNightMode automatically recreates the Activity to apply the new colors instantly.
         });
 
-        // Header Buttons
+        // Profile Buttons
         view.findViewById(R.id.btnProfile).setOnClickListener(v -> {
-            // Navigate to Profile Fragment (To be created)
-            Toast.makeText(getContext(), "Profile clicked", Toast.LENGTH_SHORT).show();
+            Navigation.findNavController(view).navigate(R.id.action_dashboardFragment_to_profileFragment);
         });
 
 
