@@ -44,6 +44,10 @@ public class TokenManager {
                 .apply();
     }
 
+    public String getUserId() {
+        return sharedPreferences.getString(KEY_USER_ID, null);
+    }
+
     public String getAccessToken(){
         return sharedPreferences.getString(KEY_ACCESS_TOKEN, null);
     }
@@ -55,4 +59,6 @@ public class TokenManager {
     public void clearTokens(){
         sharedPreferences.edit().clear().apply();
     }
+
+
 }

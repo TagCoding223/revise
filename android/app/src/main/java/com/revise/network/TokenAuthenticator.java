@@ -43,7 +43,7 @@ public class TokenAuthenticator implements Authenticator {
         if (refreshResponse.isSuccessful() && refreshResponse.body() != null) {
             // Save the new tokens
             String newAccessToken = refreshResponse.body().getAccessToken();
-            tokenManager.saveTokens(newAccessToken, currentRefreshToken, tokenManager.getUserId()); // Keep old refresh token or save new one if backend rotates it
+            tokenManager.saveToken(newAccessToken, currentRefreshToken, tokenManager.getUserId()); // Keep old refresh token or save new one if backend rotates it
 
             // Retry the original request with the brand new access token
             return response.request().newBuilder()
