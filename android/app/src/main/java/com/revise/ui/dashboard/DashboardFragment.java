@@ -1,6 +1,7 @@
 package com.revise.ui.dashboard;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
@@ -24,8 +25,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.revise.MainActivity;
 import com.revise.R;
 import com.revise.model.Topic;
+import com.revise.network.TokenManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,6 +86,8 @@ public class DashboardFragment extends Fragment {
             Navigation.findNavController(view).navigate(R.id.action_dashboardFragment_to_profileFragment);
         });
 
+        // Logout Button
+        view.findViewById(R.id.btnLogout).setOnClickListener(v -> showLogoutConfirmationDialog());
 
         // --- Demo Data Setup ---
         List<Topic> todayTopics = new ArrayList<>();
@@ -220,6 +225,27 @@ public class DashboardFragment extends Fragment {
         });
 
         dialog.show();
+    }
+
+    private void showLogoutConfirmationDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Log Out")
+                .setMessage("Are you sure you want to log out of your account?")
+                .setPositiveButton("Log Out", (dialog, which) -> executeLogout())
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    private void executeLogout() {
+        // 1. Wipe the secure tokens
+        TokenManager tokenManager = new TokenManager(requireContext());
+        tokenManager.clearTokens();
+
+        // 2. Restart MainActivity to completely reset the app state
+        // This is exactly the same logic we used in the TokenAuthenticator for forced logouts
+        Intent intent = new Intent(requireActivity(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 
     // Helper to dynamically inject link inputs

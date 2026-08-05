@@ -153,8 +153,11 @@ public class LoginFragment extends Fragment {
 
         // 3. Execute Async Network Call
         apiService.login(request).enqueue(new Callback<AuthResponse>() {
+
             @Override
             public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
+                btnLogin.setEnabled(true);
+                btnLogin.setText("Continue");
                 if (response.isSuccessful() && response.body() != null) {
                     AuthResponse authData = response.body();
 
@@ -190,6 +193,8 @@ public class LoginFragment extends Fragment {
 
             @Override
             public void onFailure(Call<AuthResponse> call, Throwable t) {
+                btnLogin.setEnabled(true);
+                btnLogin.setText("Continue");
                 // Handles no internet or server down
                 Toast.makeText(getContext(), "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
