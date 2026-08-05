@@ -6,6 +6,11 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.navigation.NavController;
+import androidx.navigation.NavGraph;
+import androidx.navigation.fragment.NavHostFragment;
+
+import com.revise.network.TokenManager;
 
 public class MainActivity extends AppCompatActivity {
     // A flag to track if your app has finished its initial heavy lifting
@@ -30,13 +35,42 @@ public class MainActivity extends AppCompatActivity {
         // 2. Keep the splash screen visible until your data is ready
         splashScreen.setKeepOnScreenCondition(() -> !isAppReady);
 
-        // 3. Simulate loading initial data (e.g., checking JWT token, checking Room DB)
+        // 3. Setup Navigation safely on the Main UI Thread
+        setupNavigation();
+
+        // 4. Start the background delay for the splash screen
         loadInitialData();
     }
 
+    private void setupNavigation() {
+        // 1. Find the Navigation Host
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+
+        if (navHostFragment != null) {
+            NavController navController = navHostFragment.getNavController();
+
+            // 2. Inflate the graph manually so we can change the start destination
+            NavGraph navGraph = navController.getNavInflater().inflate(R.navigation.nav_graph);
+
+            // 3. Check for existing session
+            TokenManager tokenManager = new TokenManager(this);
+            if (tokenManager.getRefreshToken() != null) {
+                // User is logged in -> Go straight to Dashboard
+                navGraph.setStartDestination(R.id.dashboardFragment);
+            } else {
+                // User is NOT logged in -> Show Login Screen
+                navGraph.setStartDestination(R.id.loginFragment);
+            }
+
+            // 4. Apply the modified graph to the controller
+            navController.setGraph(navGraph);
+        }
+    }
+
     private void loadInitialData() {
-        // Here you would check for stored tokens or offline sync states.
-        // We use a simple thread to simulate a 1.5-second load.
+        // We use a simple thread ONLY to simulate a 1.5-second load.
+        // Once time passes, we flip the flag to dismiss the splash screen.
         new Thread(() -> {
             try {
                 Thread.sleep(1500);
@@ -45,8 +79,6 @@ public class MainActivity extends AppCompatActivity {
             }
             // Once data is loaded, set flag to true to dismiss the splash screen
             isAppReady = true;
-
-            // You can then trigger your Navigation logic here (e.g., go to Log in or Dashboard)
         }).start();
     }
 }

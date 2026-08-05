@@ -17,7 +17,7 @@ public class RetrofitClient {
     public static Retrofit getClient(Context context) {
         if (retrofit == null){
             TokenManager tokenManager = new TokenManager(context);
-            TokenAuthenticator authenticator = new TokenAuthenticator(tokenManager);
+            TokenAuthenticator authenticator = new TokenAuthenticator(context,tokenManager);
 
             OkHttpClient okHttpClient = new OkHttpClient.Builder()
                     .addInterceptor(new AuthInterceptor(tokenManager))

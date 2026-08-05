@@ -1,5 +1,9 @@
 package com.revise.network;
 
+import android.content.Context;
+import android.content.Intent;
+
+import com.revise.MainActivity;
 import com.revise.dto.request.RefreshRequest;
 import com.revise.dto.response.TokenRefreshResponse;
 
@@ -14,8 +18,10 @@ import retrofit2.Call;
 public class TokenAuthenticator implements Authenticator {
     private TokenManager tokenManager;
     private AuthApiService authApiService; // We will pass this in
+    private Context context;
 
-    public TokenAuthenticator(TokenManager tokenManager) {
+    public TokenAuthenticator(Context context, TokenManager tokenManager) {
+        this.context = context.getApplicationContext(); // Use app context to prevent memory leaks
         this.tokenManager = tokenManager;
     }
 
@@ -36,12 +42,12 @@ public class TokenAuthenticator implements Authenticator {
             return null;
         }
 
-        // Make a SYNCHRONOUS request to your backend to get a new access token
+        // Make a SYNCHRONOUS request to your backend to get a new access token (Request new access token synchronously)
         Call<TokenRefreshResponse> refreshCall = authApiService.refreshToken(new RefreshRequest(currentRefreshToken));
         retrofit2.Response<TokenRefreshResponse> refreshResponse = refreshCall.execute();
 
         if (refreshResponse.isSuccessful() && refreshResponse.body() != null) {
-            // Save the new tokens
+            // Success: Save new token and retry the failed request
             String newAccessToken = refreshResponse.body().getAccessToken();
             tokenManager.saveTokens(newAccessToken, currentRefreshToken, tokenManager.getUserId()); // Keep old refresh token or save new one if backend rotates it
 
@@ -50,9 +56,18 @@ public class TokenAuthenticator implements Authenticator {
                     .header("Authorization", "Bearer " + newAccessToken)
                     .build();
         } else {
-            // Refresh token expired. Wipe data and route to login screen.
+            // FAILURE: Refresh token is expired or invalid.
+
+            // 1. Wipe data
             tokenManager.clearTokens();
-            // TODO: Broadcast an intent or event here to force your MainActivity to redirect to LoginFragment
+
+            // 2. Force navigation back to MainActivity (which will see no tokens and load LoginFragment)
+            Intent intent = new Intent(context, MainActivity.class);
+
+            // These flags clear the entire app backstack so the user can't press "Back" to return to the dashboard
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            context.startActivity(intent);
+
             return null;
         }
     }
