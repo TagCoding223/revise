@@ -1,5 +1,6 @@
 package com.revise.network;
 
+import com.revise.dto.request.GoogleAuthRequest;
 import com.revise.dto.request.LoginRequest;
 import com.revise.dto.request.RefreshRequest;
 import com.revise.dto.request.SignupRequest;
@@ -20,4 +21,7 @@ public interface AuthApiService {
 
     @POST("api/v1/auth/refresh")
     Call<TokenRefreshResponse> refreshToken(@Body RefreshRequest request);
+
+    @POST("api/v1/auth/google")
+    Call<AuthResponse> googleLogin(@Body GoogleAuthRequest request);
 }
