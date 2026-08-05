@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,6 +22,7 @@ import com.revise.dto.request.SignupRequest;
 import com.revise.dto.response.AuthResponse;
 import com.revise.network.AuthApiService;
 import com.revise.network.RetrofitClient;
+import com.revise.network.TokenManager;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -89,21 +91,25 @@ public class SignupFragment extends Fragment {
         // Checks for at least one lowercase letter
         if (!password.matches(".*[a-z].*")) {
             Toast.makeText(getContext(),"Password must contain at least one lowercase letter.", Toast.LENGTH_SHORT).show();
+            return;
         }
 
         // Checks for at least one uppercase letter
         if (!password.matches(".*[A-Z].*")) {
             Toast.makeText(getContext(),"Password must contain at least one uppercase letter.", Toast.LENGTH_SHORT).show();
+            return;
         }
 
         // Checks for at least one digit
         if (!password.matches(".*[0-9].*")) {
             Toast.makeText(getContext(),"Password must contain at least one number.", Toast.LENGTH_SHORT).show();
+            return;
         }
 
         // Checks for at least one special symbol (non-alphanumeric)
         if (!password.matches(".*[^a-zA-Z0-9].*")) {
             Toast.makeText(getContext(),"Password must contain at least one special symbol.", Toast.LENGTH_SHORT).show();
+            return;
         }
 
         if (!password.equals(confirmPassword)) {
@@ -116,7 +122,7 @@ public class SignupFragment extends Fragment {
         btnSignup.setText("Creating Account...");
 
         // --- Execute API Call ---
-        SignupRequest request = new SignupRequest(fullName, email, password);
+        SignupRequest request = new SignupRequest(password,email,fullName);
 
         apiService.signup(request).enqueue(new Callback<AuthResponse>() {
             @Override
@@ -125,7 +131,15 @@ public class SignupFragment extends Fragment {
                 btnSignup.setText("Sign Up");
 
                 if (response.isSuccessful() && response.body() != null) {
+                    AuthResponse authData = response.body();
                     Toast.makeText(getContext(), "Signup successful! Check your email.", Toast.LENGTH_LONG).show();
+
+                    TokenManager tokenManager = new TokenManager(requireContext());
+                    tokenManager.saveToken(
+                            authData.getToken(),
+                            authData.getRefreshToken(),
+                            authData.getUserId()
+                    );
 
                     // Package the email to pass to the OTP screen
                     Bundle bundle = new Bundle();
@@ -138,6 +152,7 @@ public class SignupFragment extends Fragment {
                     if (response.code() == 409) {
                         Toast.makeText(getContext(), "Account already exists. Please log in.", Toast.LENGTH_LONG).show();
                     } else {
+                        Log.d("Signup",response.toString());
                         Toast.makeText(getContext(), "Signup failed. Please try again.", Toast.LENGTH_SHORT).show();
                     }
                 }
