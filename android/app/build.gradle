@@ -28,6 +28,9 @@ android {
 
         // Inject the property as a BuildConfig field
         buildConfigField "String", "API_BASE_URL", localProperties.getProperty("API_BASE_URL", "\"http://10.231.229.52:8080/\"")
+
+        // Inject and Expose Google Client ID
+        buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", localProperties.getProperty("GOOGLE_WEB_CLIENT_ID", "\"\"")
     }
 
     buildFeatures {
