@@ -90,9 +90,12 @@ public class AuthServiceImpl implements AuthService {
         // 4. Generate and send OTP via email.
         otpService.generateAndSendOtp(request.getEmail());
 
-        // 5. Return flow response (NO TOKEN ISSUED HERE)
+        // 5. Return flow response 
         AuthResponse response = new AuthResponse();
         response.setMessage("Signup successful. Please verify OTP.");
+        String token = jwtTokenProvider.generateToken(createdUser
+            .getId());
+        response.setToken(token);
         response.setRefreshToken(refreshTokenService.createRefreshToken(createdUser.getId()).getToken());
         response.setUserId(createdUser.getId());
         return response;

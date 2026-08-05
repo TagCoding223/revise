@@ -17,22 +17,32 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.google.android.material.button.MaterialButton;
 import com.revise.R;
+import com.revise.dto.response.AuthResponse;
+import com.revise.network.AuthApiService;
+import com.revise.network.RetrofitClient;
+import com.revise.network.TokenManager;
 
 import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class VerifyOtpFragment extends Fragment {
 
     private EditText etOtp1, etOtp2, etOtp3, etOtp4;
+    private MaterialButton btnVerify;
     private TextView tvTimer, tvResend;
     private CountDownTimer countDownTimer;
+    private AuthApiService apiService;
+    private String userEmail = "";
 
     // 130 seconds = 2 minutes and 10 seconds
     private static final long START_TIME_IN_MILLIS = 130000;
 
-    public VerifyOtpFragment() {
-        // Required empty public constructor
-    }
+    public VerifyOtpFragment() {}
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -50,16 +60,18 @@ public class VerifyOtpFragment extends Fragment {
         etOtp4 = view.findViewById(R.id.etOtp4);
         tvTimer = view.findViewById(R.id.tvTimer);
         tvResend = view.findViewById(R.id.tvResend);
+        btnVerify = view.findViewById(R.id.btnVerify);
 
-        // NEW: Find the email display TextView
+        // Find the email display TextView
         TextView tvEmailDisplay = view.findViewById(R.id.tvEmailDisplay);
 
-        // NEW: Retrieve the email from the Bundle and display it
-        String passedEmail = "";
+        // Retrieve the email from the Bundle and display it
         if (getArguments() != null) {
-            passedEmail = getArguments().getString("USER_EMAIL", "your email address");
+            userEmail = getArguments().getString("USER_EMAIL", "your email address");
         }
-        tvEmailDisplay.setText(passedEmail);
+        tvEmailDisplay.setText(userEmail);
+
+        apiService = RetrofitClient.getClient(requireContext()).create(AuthApiService.class);
 
         setupOtpInputs();
         startTimer();
@@ -71,18 +83,103 @@ public class VerifyOtpFragment extends Fragment {
         });
 
         // Handle Verify Click
-        view.findViewById(R.id.btnVerify).setOnClickListener(v -> {
-            String otpCode = etOtp1.getText().toString() + etOtp2.getText().toString() +
-                    etOtp3.getText().toString() + etOtp4.getText().toString();
+        btnVerify.setOnClickListener(v -> attemptVerification(view));
+        tvResend.setOnClickListener(v -> attemptResendOtp());
 
-            if (otpCode.length() < 4) {
-                Toast.makeText(getContext(), "Please enter all 4 digits", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(getContext(), "Verifying: " + otpCode, Toast.LENGTH_SHORT).show();
+        view.findViewById(R.id.btnBack).setOnClickListener(v -> {
+            Navigation.findNavController(view).popBackStack();
+        });
+    }
 
-                // TODO: Add actual Retrofit API call here later.
-                // For now, simulate a successful verification and navigate to Dashboard:
-                Navigation.findNavController(view).navigate(R.id.action_verifyOtpFragment_to_dashboardFragment);
+    private void attemptResendOtp() {
+        if (userEmail.isEmpty()) return;
+
+        // Disable button visually during network request
+        tvResend.setEnabled(false);
+        tvResend.setText("Sending...");
+
+        apiService.resendOtp(userEmail).enqueue(new Callback<AuthResponse>() {
+            @Override
+            public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(getContext(), "New OTP sent!", Toast.LENGTH_SHORT).show();
+                    startTimer(); // Restart the 130-second cooldown
+                } else {
+                    tvResend.setEnabled(true);
+                    tvResend.setText("Resend OTP");
+                    Toast.makeText(getContext(), "Failed to resend. Please try again.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AuthResponse> call, Throwable t) {
+                tvResend.setEnabled(true);
+                tvResend.setText("Resend OTP");
+                Toast.makeText(getContext(), "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void attemptVerification(View view) {
+
+
+        String otp = ((etOtp1.getText() != null) ? etOtp1.getText().toString().trim() : "")
+                + ((etOtp2.getText() != null) ? etOtp2.getText().toString().trim() : "")
+                + ((etOtp3.getText() != null) ? etOtp3.getText().toString().trim() : "")
+                + ((etOtp4.getText() != null) ? etOtp4.getText().toString().trim() : "");
+
+        if (otp.isEmpty()) {
+            Toast.makeText(getContext(), "Please enter the OTP", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if(otp.length() < 4){
+            Toast.makeText(getContext(), "Please enter all 4 digits", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (userEmail.isEmpty()) {
+            Toast.makeText(getContext(), "Email missing. Please sign up again.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        btnVerify.setEnabled(false);
+        btnVerify.setText("Verifying...");
+
+        apiService.verifyOtp(userEmail, otp).enqueue(new Callback<AuthResponse>() {
+            @Override
+            public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
+                btnVerify.setEnabled(true);
+                btnVerify.setText("Verify Account");
+
+                if (response.isSuccessful() && response.body() != null) {
+                    AuthResponse authData = response.body();
+
+                    // Securely save the session tokens
+                    TokenManager tokenManager = new TokenManager(requireContext());
+                    tokenManager.saveTokens(
+                            authData.getToken(),
+                            authData.getRefreshToken(),
+                            authData.getUserId()
+                    );
+
+                    Toast.makeText(getContext(), "Email Verified Successfully!", Toast.LENGTH_SHORT).show();
+
+                    Navigation.findNavController(view).navigate(R.id.action_verifyOtpFragment_to_dashboardFragment);
+                } else {
+                    if (response.code() == 400) {
+                        Toast.makeText(getContext(), "Invalid or Expired OTP", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(getContext(), "Verification Failed", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AuthResponse> call, Throwable t) {
+                btnVerify.setEnabled(true);
+                btnVerify.setText("Verify Account");
+                Toast.makeText(getContext(), "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

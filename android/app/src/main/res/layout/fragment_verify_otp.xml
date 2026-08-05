@@ -13,6 +13,16 @@
         android:layout_height="wrap_content"
         android:padding="24dp">
 
+        <!--  Back Button      -->
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:srcCompat="@android:drawable/ic_menu_revert"
+            app:tint="@color/text_secondary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
         <!-- Header -->
         <TextView
             android:id="@+id/tvHeader"
