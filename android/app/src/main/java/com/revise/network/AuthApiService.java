@@ -10,6 +10,7 @@ import com.revise.dto.response.TokenRefreshResponse;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.POST;
+import retrofit2.http.Query;
 
 public interface AuthApiService {
 
@@ -24,4 +25,15 @@ public interface AuthApiService {
 
     @POST("api/v1/auth/google")
     Call<AuthResponse> googleLogin(@Body GoogleAuthRequest request);
+
+    @POST("api/v1/auth/verify-otp")
+    Call<AuthResponse> verifyOtp(
+            @Query("email") String email,
+            @Query("otp") String otp
+    );
+
+    @POST("api/v1/auth/resend-otp")
+    Call<AuthResponse> resendOtp(
+            @Query("email") String email
+    );
 }
