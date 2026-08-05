@@ -41,6 +41,11 @@
         <action
             android:id="@+id/action_signupFragment_to_verifyOtpFragment"
             app:destination="@id/verifyOtpFragment" />
+
+        <!-- Action to travel from Signup to Dashboard -->
+        <action
+            android:id="@+id/action_signupFragment_to_dashboardFragment"
+            app:destination="@id/dashboardFragment" />
     </fragment>
 
     <!-- Verify OTP Screen -->

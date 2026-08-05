@@ -13,7 +13,6 @@ import com.revise.service.AuthService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Slf4j
 public class AuthController {
     private final AuthService authService;
 
@@ -51,7 +49,6 @@ public class AuthController {
     @PostMapping("/google")
     // same endpoint use for google auth login and signup and same service also
     public ResponseEntity<AuthResponse> googleAuth(@Valid @RequestBody GoogleAuthRequest request) {
-        log.debug("Google");
         return ResponseEntity.ok(authService.googleAuth(request));
     }
 
