@@ -135,7 +135,7 @@ public class SignupFragment extends Fragment {
                     Toast.makeText(getContext(), "Signup successful! Check your email.", Toast.LENGTH_LONG).show();
 
                     TokenManager tokenManager = new TokenManager(requireContext());
-                    tokenManager.saveToken(
+                    tokenManager.saveTokens(
                             authData.getToken(),
                             authData.getRefreshToken(),
                             authData.getUserId()

@@ -37,7 +37,7 @@ public class TokenManager {
         }
     }
 
-    public void saveToken(String accessToken, String refreshToken, String userId){
+    public void saveTokens(String accessToken, String refreshToken, String userId){
         sharedPreferences.edit()
                 .putString(KEY_ACCESS_TOKEN, accessToken)
                 .putString(KEY_REFRESH_TOKEN, refreshToken)
