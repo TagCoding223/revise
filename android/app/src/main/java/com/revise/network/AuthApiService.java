@@ -5,10 +5,12 @@ import com.revise.dto.request.LoginRequest;
 import com.revise.dto.request.RefreshRequest;
 import com.revise.dto.request.SignupRequest;
 import com.revise.dto.response.AuthResponse;
+import com.revise.dto.response.ProfileResponse;
 import com.revise.dto.response.TokenRefreshResponse;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
 
@@ -36,4 +38,7 @@ public interface AuthApiService {
     Call<AuthResponse> resendOtp(
             @Query("email") String email
     );
+
+    @GET("api/v1/users/me")
+    Call<ProfileResponse> getUserProfile();
 }

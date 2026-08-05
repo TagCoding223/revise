@@ -23,6 +23,10 @@ public class AuthInterceptor implements Interceptor {
         }
 
         String accessToken = tokenManager.getAccessToken();
+
+        // --- ADD THIS LOG --- TODO: Remove this log
+        android.util.Log.d("NetworkLog", "Attaching Token to Request: " + accessToken);
+
         if(accessToken != null){
             Request newRequest = originalRequest.newBuilder()
                     .header("Authorization","Bearer "+accessToken)
