@@ -7,10 +7,12 @@ import android.os.Looper;
 import com.revise.database.AppDatabase;
 import com.revise.database.TopicDao;
 import com.revise.dto.request.TopicRequest;
+import com.revise.dto.request.TopicSyncRequest;
 import com.revise.model.Topic;
 import com.revise.network.RetrofitClient;
 import com.revise.network.TopicApiService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -41,28 +43,42 @@ public class TopicRepository {
     }
 
     // ==========================================
-    // 1. FETCH TOPICS
+    // 1. FETCH TOPICS & BACKGROUND SYNC
     // ==========================================
     public void getTopics(RepositoryCallback<List<Topic>> callback) {
         executorService.execute(() -> {
+            // 1. Show local data immediately
             List<Topic> localTopics = topicDao.getAllTopics();
             if (localTopics != null && !localTopics.isEmpty()) {
                 mainThreadHandler.post(() -> callback.onSuccess(localTopics));
             }
 
+            // 2. Fetch fresh server data
             apiService.getAllTopics().enqueue(new Callback<List<Topic>>() {
                 @Override
                 public void onResponse(Call<List<Topic>> call, Response<List<Topic>> response) {
                     if (response.isSuccessful() && response.body() != null) {
                         executorService.execute(() -> {
-                            List<Topic> remoteTopics = response.body();
-                            // Ensure the remote topics are marked as synced
-                            for (Topic t : remoteTopics) { t.setSynced(true); }
+                            // A: BACKUP offline changes before wiping!
+                            List<Topic> unsynced = topicDao.getUnsyncedTopics();
 
+                            // B: Wipe and insert fresh server data
+                            List<Topic> remoteTopics = response.body();
+                            for (Topic t : remoteTopics) { t.setSynced(true); }
                             topicDao.clearAll();
                             topicDao.insertTopics(remoteTopics);
 
-                            mainThreadHandler.post(() -> callback.onSuccess(remoteTopics));
+                            // C: RESTORE offline changes so they are not lost
+                            if (unsynced != null && !unsynced.isEmpty()) {
+                                topicDao.insertTopics(unsynced);
+
+                                // D: Push these offline changes to the Spring Boot server!
+                                pushOfflineData(unsynced);
+                            }
+
+                            // E: Update the UI with the final merged list
+                            List<Topic> finalTopics = topicDao.getAllTopics();
+                            mainThreadHandler.post(() -> callback.onSuccess(finalTopics));
                         });
                     }
                 }
@@ -70,10 +86,57 @@ public class TopicRepository {
                 @Override
                 public void onFailure(Call<List<Topic>> call, Throwable t) {
                     if (localTopics == null || localTopics.isEmpty()) {
-                        mainThreadHandler.post(() -> callback.onError("Network offline. No local data found."));
+                        mainThreadHandler.post(() -> callback.onError("Network offline."));
                     }
                 }
             });
+        });
+    }
+
+    // ==========================================
+    // HELPER: BATCH SYNC TO BACKEND
+    // ==========================================
+    private void pushOfflineData(List<Topic> unsyncedTopics) {
+        List<TopicSyncRequest> batchPayload = new ArrayList<>();
+
+        for (Topic t : unsyncedTopics) {
+            if (t.isDeleted()) {
+                // If deleted offline, run the standard delete route
+                deleteTopic(t.getId(), new RepositoryCallback<Void>() {
+                    @Override public void onSuccess(Void data) {}
+                    @Override public void onError(String message) {}
+                });
+            } else {
+                // Otherwise, package it for the batch sync
+                batchPayload.add(new TopicSyncRequest(
+                        t.getId(), t.getTitle(), t.getDescription(), t.getLinks(), t.getStage()
+                ));
+            }
+        }
+
+        if (batchPayload.isEmpty()) return;
+
+        // Send the batch to Spring Boot
+        apiService.pushSyncBatch(batchPayload).enqueue(new Callback<com.revise.dto.response.ApiResponse>() {
+            @Override
+            public void onResponse(Call<com.revise.dto.response.ApiResponse> call, Response<com.revise.dto.response.ApiResponse> response) {
+                if (response.isSuccessful()) {
+                    executorService.execute(() -> {
+                        // Success! Mark them as synced in the local Room DB
+                        for (Topic t : unsyncedTopics) {
+                            if (!t.isDeleted()) {
+                                t.setSynced(true);
+                                topicDao.insertTopic(t);
+                            }
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onFailure(Call<com.revise.dto.response.ApiResponse> call, Throwable t) {
+                // Fails silently. They remain isSynced=false and will try again on next launch!
+            }
         });
     }
 
