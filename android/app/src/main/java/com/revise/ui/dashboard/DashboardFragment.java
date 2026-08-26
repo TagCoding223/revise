@@ -7,6 +7,7 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -28,12 +30,23 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.revise.MainActivity;
 import com.revise.R;
 import com.revise.model.Topic;
+import com.revise.network.RetrofitClient;
 import com.revise.network.TokenManager;
+import com.revise.network.TopicApiService;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class DashboardFragment extends Fragment {
+
+    private RecyclerView rvToday, rvTomorrow, rvUpcoming;
+    private TopicApiService apiService;
 
     public DashboardFragment() {}
 
@@ -46,131 +59,198 @@ public class DashboardFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Initialize API Service
+        apiService = RetrofitClient.getClient(requireContext()).create(TopicApiService.class);
+
         // --- Theme Toggle Logic ---
         ImageButton btnThemeToggle = view.findViewById(R.id.btnThemeToggle);
-
-        // 1. Check the current active theme
         int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         boolean isDarkMode = currentNightMode == Configuration.UI_MODE_NIGHT_YES;
 
-        // 2. Set the appropriate icon
-        if (isDarkMode) {
-            btnThemeToggle.setImageResource(R.drawable.ic_theme_light); // Show Sun in Dark Mode
-        } else {
-            btnThemeToggle.setImageResource(R.drawable.ic_theme_dark);  // Show Moon in Light Mode
-        }
+        btnThemeToggle.setImageResource(isDarkMode ? R.drawable.ic_theme_light : R.drawable.ic_theme_dark); //[cite: 8]
 
-        // 3. Handle the click event to switch themes
         btnThemeToggle.setOnClickListener(v -> {
             SharedPreferences prefs = requireActivity().getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = prefs.edit();
-
             if (isDarkMode) {
-                // Switch to Light Mode
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-                editor.putInt("ThemeMode", AppCompatDelegate.MODE_NIGHT_NO);
+                prefs.edit().putInt("ThemeMode", AppCompatDelegate.MODE_NIGHT_NO).apply();
             } else {
-                // Switch to Dark Mode
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-                editor.putInt("ThemeMode", AppCompatDelegate.MODE_NIGHT_YES);
+                prefs.edit().putInt("ThemeMode", AppCompatDelegate.MODE_NIGHT_YES).apply();
             }
-
-            // Save the preference
-            editor.apply();
-
-            // Note: setDefaultNightMode automatically recreates the Activity to apply the new colors instantly.
         });
 
-        // Profile Buttons
-        view.findViewById(R.id.btnProfile).setOnClickListener(v -> {
-            Navigation.findNavController(view).navigate(R.id.action_dashboardFragment_to_profileFragment);
-        });
-
-        // Logout Button
+        // Setup Buttons[cite: 8]
+        view.findViewById(R.id.btnProfile).setOnClickListener(v ->
+                Navigation.findNavController(view).navigate(R.id.action_dashboardFragment_to_profileFragment));
         view.findViewById(R.id.btnLogout).setOnClickListener(v -> showLogoutConfirmationDialog());
-
-        // --- Demo Data Setup ---
-        List<Topic> todayTopics = new ArrayList<>();
-        todayTopics.add(new Topic("1", "Java Class Loader Subsystem", "Workflow and inner workings of the loading phase. Focus on system environment classpath variable overrides.", 3, "today"));
-        todayTopics.add(new Topic("2", "DBMS Normalization Forms", "Differences between 3NF, 4NF, and 5NF with practical examples of data anomalies.", 1, "today"));
-
-        List<Topic> tomorrowTopics = new ArrayList<>();
-        tomorrowTopics.add(new Topic("3", "Tomcat Servlets & WEB-INF", "Directory structure routing and hidden configuration files behavior when deleted.", 2, "tomorrow"));
-
-        List<Topic> upcomingTopics = new ArrayList<>();
-        upcomingTopics.add(new Topic("4", "Algorithm Design Approaches", "Comparison between greedy, dynamic programming, and divide & conquer strategies.", 5, "other"));
-
-        /*
-         * Note on Adapter Logic for Active vs Disabled UI:
-         * When you bind your RecyclerView adapters later, you will use this logic
-         * inside your ViewHolder's bind() method based on the topic's category:
-         *
-         * if (!topic.getCategory().equals("today")) {
-         *     // Fade the entire card to 60% opacity to look disabled
-         *     cardContainer.setAlpha(0.6f);
-         *
-         *     // Disable the Revise button
-         *     btnRevise.setEnabled(false);
-         *     btnRevise.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
-         * } else {
-         *     // Make it fully opaque and active
-         *     cardContainer.setAlpha(1.0f);
-         *     btnRevise.setEnabled(true);
-         * }
-         */
-
-        // Wire the FAB to the Create Modal
         view.findViewById(R.id.fabAddTopic).setOnClickListener(v -> showCreateUpdateModal(null));
 
-        // Example wiring adapter:
-//         TopicAdapter adapter = new TopicAdapter(todayTopics, this::showViewModal, this::showCreateUpdateModal, this::showDeleteModal);
+        // Initialize RecyclerViews
+        rvToday = view.findViewById(R.id.rvToday);
+        rvTomorrow = view.findViewById(R.id.rvTomorrow);
+        rvUpcoming = view.findViewById(R.id.rvUpcoming);
 
-        // --- Create the Listener Implementation ---
-        TopicAdapter.OnTopicClickListener topicClickListener = new TopicAdapter.OnTopicClickListener() {
-            @Override
-            public void onViewClick(Topic topic) {
-                showViewModal(topic); // Opens View Modal
-            }
-
-            @Override
-            public void onEditClick(Topic topic) {
-                showCreateUpdateModal(topic); // Opens Update Modal with existing data
-            }
-
-            @Override
-            public void onDeleteClick(Topic topic) {
-                showDeleteModal(topic); // Opens Delete Modal
-            }
-
-            @Override
-            public void onReviseClick(Topic topic) {
-                Toast.makeText(getContext(), "Revise clicked for " + topic.getTitle(), Toast.LENGTH_SHORT).show();
-                // Later, you will call your API here to update the stage
-            }
-        };
-
-        // --- Wire up RecyclerViews with the listener ---
-        RecyclerView rvToday = view.findViewById(R.id.rvToday);
         rvToday.setLayoutManager(new LinearLayoutManager(getContext()));
-        rvToday.setAdapter(new TopicAdapter(todayTopics, topicClickListener)); // Passed listener
-
-        RecyclerView rvTomorrow = view.findViewById(R.id.rvTomorrow);
         rvTomorrow.setLayoutManager(new LinearLayoutManager(getContext()));
-        rvTomorrow.setAdapter(new TopicAdapter(tomorrowTopics, topicClickListener)); // Passed listener
-
-        RecyclerView rvUpcoming = view.findViewById(R.id.rvUpcoming);
         rvUpcoming.setLayoutManager(new LinearLayoutManager(getContext()));
-        rvUpcoming.setAdapter(new TopicAdapter(upcomingTopics, topicClickListener)); // Passed listener
+
+        // Fetch live data from backend
+        fetchTopics();
     }
 
     // ==========================================
-    // 1. CREATE / UPDATE MODAL
+    // 1. DATA FETCHING
+    // ==========================================
+    private void fetchTopics() {
+        // Now calling getAllTopics()
+        apiService.getAllTopics().enqueue(new Callback<List<Topic>>() {
+            @Override
+            public void onResponse(Call<List<Topic>> call, Response<List<Topic>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Topic> allTopics = response.body();
+
+                    List<Topic> today = new ArrayList<>();
+                    List<Topic> tomorrow = new ArrayList<>();
+                    List<Topic> upcoming = new ArrayList<>();
+
+                    // Manually group them based on the backend's dynamic category string
+                    for (Topic topic : allTopics) {
+                        if ("today".equals(topic.getCategory())) {
+                            today.add(topic);
+                        } else if ("tomorrow".equals(topic.getCategory())) {
+                            tomorrow.add(topic);
+                        } else {
+                            upcoming.add(topic);
+                        }
+                    }
+
+                    if (allTopics.isEmpty()) {
+                        Toast.makeText(getContext(), "No topics found. Start creating!", Toast.LENGTH_LONG).show();
+                    }
+
+                    TopicAdapter.OnTopicClickListener listener = createTopicClickListener();
+                    rvToday.setAdapter(new TopicAdapter(today, listener));
+                    rvTomorrow.setAdapter(new TopicAdapter(tomorrow, listener));
+                    rvUpcoming.setAdapter(new TopicAdapter(upcoming, listener));
+
+                } else {
+                    handleServerError(response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Topic>> call, Throwable t) {
+                handleNetworkError(t);
+            }
+        });
+    }
+
+    private TopicAdapter.OnTopicClickListener createTopicClickListener() {
+        return new TopicAdapter.OnTopicClickListener() {
+            @Override
+            public void onViewClick(Topic topic) { showViewModal(topic); }
+            @Override
+            public void onEditClick(Topic topic) { showCreateUpdateModal(topic); }
+            @Override
+            public void onDeleteClick(Topic topic) { showDeleteModal(topic); }
+            @Override
+            public void onReviseClick(Topic topic) { executeRevise(topic); }
+        };
+    }
+
+    // ==========================================
+    // 2. CRUD EXECUTIONS
+    // ==========================================
+    private void executeRevise(Topic topic) {
+        apiService.reviseTopic(topic.getId()).enqueue(new Callback<Topic>() {
+            @Override
+            public void onResponse(Call<Topic> call, Response<Topic> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(getContext(), "Revision logged!", Toast.LENGTH_SHORT).show();
+                    fetchTopics(); // Refresh dashboard
+                } else {
+                    handleServerError(response.code());
+                }
+            }
+            @Override
+            public void onFailure(Call<Topic> call, Throwable t) { handleNetworkError(t); }
+        });
+    }
+
+    private void executeDelete(Topic topic) {
+        apiService.deleteTopic(topic.getId()).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(getContext(), "Topic Deleted", Toast.LENGTH_SHORT).show();
+                    fetchTopics(); // Refresh dashboard
+                } else {
+                    handleServerError(response.code());
+                }
+            }
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) { handleNetworkError(t); }
+        });
+    }
+
+    private void saveOrUpdateTopic(Topic existingTopic, String title, String description, List<String> links, AlertDialog dialog) {
+        Topic payload = new Topic();
+        payload.setTitle(title);
+        payload.setDescription(description);
+
+        // UNCOMMENTED: Attach the links array to the payload
+        payload.setLinks(links);
+
+        Call<Topic> call = (existingTopic == null)
+                ? apiService.createTopic(payload)
+                : apiService.updateTopic(existingTopic.getId(), payload);
+
+        call.enqueue(new Callback<Topic>() {
+            @Override
+            public void onResponse(Call<Topic> call, Response<Topic> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(getContext(), "Saved successfully!", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                    fetchTopics(); // Instantly refresh the UI
+                } else {
+                    handleServerError(response.code());
+                }
+            }
+            @Override
+            public void onFailure(Call<Topic> call, Throwable t) { handleNetworkError(t); }
+        });
+    }
+
+    // ==========================================
+    // 3. ERROR HANDLING HELPERS
+    // ==========================================
+    private void handleServerError(int code) {
+        if (code >= 500) {
+            Toast.makeText(getContext(), "Server error. Please try again later.", Toast.LENGTH_LONG).show();
+        } else if (code == 404) {
+            Toast.makeText(getContext(), "Topic not found. It may have been deleted.", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getContext(), "Something went wrong (Code: " + code + ")", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void handleNetworkError(Throwable t) {
+        if (t instanceof IOException) {
+            Toast.makeText(getContext(), "Network unreachable. Check your connection.", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getContext(), "An unexpected error occurred.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // ==========================================
+    // 4. UI MODALS
     // ==========================================
     private void showCreateUpdateModal(@Nullable Topic existingTopic) {
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_topic_form, null);
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
-                .setBackground(new ColorDrawable(Color.TRANSPARENT)) // Allows the rounded corners of XML to show
+                .setBackground(new ColorDrawable(Color.TRANSPARENT))
                 .create();
 
         TextView tvTitle = dialogView.findViewById(R.id.tvFormTitle);
@@ -178,24 +258,26 @@ public class DashboardFragment extends Fragment {
         EditText etTopicDesc = dialogView.findViewById(R.id.etTopicDesc);
         LinearLayout layoutLinks = dialogView.findViewById(R.id.layoutLinksContainer);
 
-        // Populate if updating
         if (existingTopic != null) {
             tvTitle.setText("Update Topic");
             etTopicTitle.setText(existingTopic.getTitle());
             etTopicDesc.setText(existingTopic.getDescription());
-            // Loop through existing links and add dynamic views...
+
+            // NEW: Populate existing links if they exist
+            if (existingTopic.getLinks() != null && !existingTopic.getLinks().isEmpty()) {
+                for (String link : existingTopic.getLinks()) {
+                    addDynamicLinkView(layoutLinks, link);
+                }
+            } else {
+                addDynamicLinkView(layoutLinks, ""); // Show one empty box if no links
+            }
         } else {
-            // Add at least one empty link input by default
             addDynamicLinkView(layoutLinks, "");
         }
 
-        // Add New Link Button
         dialogView.findViewById(R.id.btnAddLink).setOnClickListener(v -> addDynamicLinkView(layoutLinks, ""));
-
-        // Cancel Button
         dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
 
-        // Save/Create Button
         dialogView.findViewById(R.id.btnSave).setOnClickListener(v -> {
             String title = etTopicTitle.getText().toString().trim();
             if (title.isEmpty()) {
@@ -209,58 +291,26 @@ public class DashboardFragment extends Fragment {
                 View linkView = layoutLinks.getChildAt(i);
                 EditText etLink = linkView.findViewById(R.id.etLinkUrl);
                 String linkText = etLink.getText().toString().trim();
+
+                // Only add links that are not empty
                 if (!linkText.isEmpty()) {
                     finalLinks.add(linkText);
                 }
             }
 
-            if (existingTopic == null) {
-                // TODO: Call Axios/Retrofit POST /api/v1/topics
-                Toast.makeText(getContext(), "Creating Topic...", Toast.LENGTH_SHORT).show();
-            } else {
-                // TODO: Call Axios/Retrofit PUT /api/v1/topics/{id}
-                Toast.makeText(getContext(), "Updating Topic...", Toast.LENGTH_SHORT).show();
-            }
-            dialog.dismiss();
+            saveOrUpdateTopic(existingTopic, title, etTopicDesc.getText().toString().trim(), finalLinks, dialog);
         });
 
         dialog.show();
     }
 
-    private void showLogoutConfirmationDialog() {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Log Out")
-                .setMessage("Are you sure you want to log out of your account?")
-                .setPositiveButton("Log Out", (dialog, which) -> executeLogout())
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                .show();
-    }
-
-    private void executeLogout() {
-        // 1. Wipe the secure tokens
-        TokenManager tokenManager = new TokenManager(requireContext());
-        tokenManager.clearTokens();
-
-        // 2. Restart MainActivity to completely reset the app state
-        // This is exactly the same logic we used in the TokenAuthenticator for forced logouts
-        Intent intent = new Intent(requireActivity(), MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-    }
-
-    // Helper to dynamically inject link inputs
     private void addDynamicLinkView(LinearLayout container, String existingUrl) {
         View linkView = LayoutInflater.from(getContext()).inflate(R.layout.item_dynamic_link, container, false);
-        EditText etLink = linkView.findViewById(R.id.etLinkUrl);
-        etLink.setText(existingUrl);
-
+        ((EditText) linkView.findViewById(R.id.etLinkUrl)).setText(existingUrl);
         linkView.findViewById(R.id.btnRemoveLink).setOnClickListener(v -> container.removeView(linkView));
         container.addView(linkView);
     }
 
-    // ==========================================
-    // 2. VIEW MODAL
-    // ==========================================
     private void showViewModal(Topic topic) {
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_view_topic, null);
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
@@ -283,19 +333,28 @@ public class DashboardFragment extends Fragment {
         dialog.show();
     }
 
-    // ==========================================
-    // 3. DELETE CONFIRMATION MODAL
-    // ==========================================
     private void showDeleteModal(Topic topic) {
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Delete Revision Topic")
-                .setMessage("Are you sure you want to delete '" + topic.getTitle() + "'? This action cannot be undone and will reset your spacing cycle for this topic.")
+                .setMessage("Are you sure you want to delete '" + topic.getTitle() + "'? This action cannot be undone and will reset your spacing cycle for this topic.") //[cite: 8]
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    // TODO: Call Axios/Retrofit DELETE /api/v1/topics/{id}
-                    Toast.makeText(getContext(), "Topic Deleted", Toast.LENGTH_SHORT).show();
-                })
+                .setPositiveButton("Delete", (dialog, which) -> executeDelete(topic))
                 .show();
-        // The standard MaterialAlertDialog automatically inherits your app's rounded corners and colors!
+    }
+
+    private void showLogoutConfirmationDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Log Out")
+                .setMessage("Are you sure you want to log out of your account?") //[cite: 8]
+                .setPositiveButton("Log Out", (dialog, which) -> executeLogout())
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    private void executeLogout() {
+        new TokenManager(requireContext()).clearTokens();
+        Intent intent = new Intent(requireActivity(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 }

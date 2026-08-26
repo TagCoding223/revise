@@ -15,8 +15,8 @@ import retrofit2.http.Path;
 public interface TopicApiService {
 
     // Assuming backend returns an object with arrays: { "today": [...], "tomorrow": [...], "upcoming": [...] }
-    @GET("api/v1/topics/dashboard")
-    Call<Map<String, List<Topic>>> getDashboardTopics();
+    @GET("api/v1/topics")
+    Call<List<Topic>> getAllTopics();
 
     @POST("api/v1/topics")
     Call<Topic> createTopic(@Body Topic request);
