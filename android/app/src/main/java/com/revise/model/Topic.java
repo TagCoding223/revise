@@ -53,4 +53,15 @@ public class Topic {
     public void setStage(int stage) {
         this.stage = stage;
     }
+
+    // Sync tracking fields
+    private boolean isSynced = true;
+    private boolean isDeleted = false;
+
+    // Getters and Setters
+    public boolean isSynced() { return isSynced; }
+    public void setSynced(boolean synced) { isSynced = synced; }
+
+    public boolean isDeleted() { return isDeleted; }
+    public void setDeleted(boolean deleted) { isDeleted = deleted; }
 }
