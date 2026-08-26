@@ -24,14 +24,27 @@
             android:id="@+id/tvTopicTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
+            android:layout_marginEnd="8dp"
             android:textColor="@color/text_primary"
             android:textSize="18sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/tvStageBadge"
+            app:layout_constraintEnd_toStartOf="@id/ivOfflineBadge"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Java Class Loader Subsystem" />
+
+        <!-- Offline Badge -->
+        <ImageView
+            android:id="@+id/ivOfflineBadge"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/ic_cloud_off"
+            android:visibility="gone"
+            app:layout_constraintEnd_toStartOf="@id/tvStageBadge"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/tvStageBadge"
+            app:tint="@android:color/darker_gray" />
 
         <!-- Stage Badge -->
         <TextView
