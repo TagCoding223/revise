@@ -72,8 +72,8 @@ public class TopicRepository {
                             if (unsynced != null && !unsynced.isEmpty()) {
                                 topicDao.insertTopics(unsynced);
 
-                                // D: Push these offline changes to the Spring Boot server!
-                                pushOfflineData(unsynced);
+                                // D: Pass the UI callback here!
+                                pushOfflineData(unsynced, callback);
                             }
 
                             // E: Update the UI with the final merged list
@@ -96,10 +96,10 @@ public class TopicRepository {
     // ==========================================
     // HELPER: BATCH SYNC TO BACKEND
     // ==========================================
-    private void pushOfflineData(List<Topic> unsyncedTopics) {
+    // The callback parameter
+    private void pushOfflineData(List<Topic> unsyncedTopics, RepositoryCallback<List<Topic>> callback) {
         List<TopicSyncRequest> batchPayload = new ArrayList<>();
 
-        // STRICT ISO-8601 formatting to satisfy Spring Boot's LocalDateTime parser
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", java.util.Locale.US);
         String currentIsoDate = sdf.format(new java.util.Date());
 
@@ -126,10 +126,14 @@ public class TopicRepository {
                     executorService.execute(() -> {
                         for (Topic t : unsyncedTopics) {
                             if (!t.isDeleted()) {
-                                t.setSynced(true);
+                                t.setSynced(true); // Database updated
                                 topicDao.insertTopic(t);
                             }
                         }
+
+                        // Re-fetch the clean list from the database and refresh the UI!
+                        List<Topic> updatedTopics = topicDao.getAllTopics();
+                        mainThreadHandler.post(() -> callback.onSuccess(updatedTopics));
                     });
                 }
             }
