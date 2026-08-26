@@ -1,5 +1,7 @@
 package com.revise.ui.profile;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -53,8 +55,20 @@ public class ProfileFragment extends Fragment {
         // 2. Initialize API Service
         apiService = RetrofitClient.getClient(requireContext()).create(AuthApiService.class);
 
-        // 3. Fetch User Data
-        fetchUserProfile();
+        // 3. Check profile data on cache
+        SharedPreferences prefs = requireContext().getSharedPreferences("ProfileCache", Context.MODE_PRIVATE);
+        String cachedName = prefs.getString("name", null);
+
+        if (cachedName != null) {
+            // Load from Cache
+            tvProfileName.setText(cachedName);
+            tvProfileEmail.setText(prefs.getString("email", ""));
+            boolean isVerified = prefs.getBoolean("verified", false);
+            ivVerifiedBadge.setImageResource(isVerified ? R.drawable.ic_verified_blue : R.drawable.ic_unverified_red);
+        } else {
+            // First time visit: Fetch from Network
+            fetchUserProfile();
+        }
 
         // 4. Navigation Actions[cite: 3]
         view.findViewById(R.id.btnBack).setOnClickListener(v -> {
@@ -73,16 +87,19 @@ public class ProfileFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     ProfileResponse profileData = response.body();
 
-                    // Update UI with live data
+                    // Update UI
                     tvProfileName.setText(profileData.getFullName());
                     tvProfileEmail.setText(profileData.getEmail());
+                    ivVerifiedBadge.setImageResource(profileData.isEmailVerified() ? R.drawable.ic_verified_blue : R.drawable.ic_unverified_red);
 
-                    // Handle verification badge logic[cite: 3]
-                    if (profileData.isEmailVerified()) {
-                        ivVerifiedBadge.setImageResource(R.drawable.ic_verified_blue);
-                    } else {
-                        ivVerifiedBadge.setImageResource(R.drawable.ic_unverified_red);
-                    }
+                    // Save to Cache for next time
+                    SharedPreferences prefs = requireContext().getSharedPreferences("ProfileCache", Context.MODE_PRIVATE);
+                    prefs.edit()
+                            .putString("name", profileData.getFullName())
+                            .putString("email", profileData.getEmail())
+                            .putBoolean("verified", profileData.isEmailVerified())
+                            .apply();
+
                 } else {
                     Log.d("Profile",response.toString());
                     Toast.makeText(getContext(), "Failed to load profile data", Toast.LENGTH_SHORT).show();

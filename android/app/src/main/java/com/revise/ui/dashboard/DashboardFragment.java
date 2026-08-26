@@ -384,6 +384,8 @@ public class DashboardFragment extends Fragment {
     }
 
     private void executeLogout() {
+        SharedPreferences prefs = requireContext().getSharedPreferences("ProfileCache", Context.MODE_PRIVATE);
+        prefs.edit().clear().apply();
         new TokenManager(requireContext()).clearTokens();
         Intent intent = new Intent(requireActivity(), MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
