@@ -1,5 +1,6 @@
 package com.revise.network;
 
+import com.revise.dto.request.TopicRequest;
 import com.revise.model.Topic;
 import java.util.List;
 import java.util.Map;
@@ -19,10 +20,10 @@ public interface TopicApiService {
     Call<List<Topic>> getAllTopics();
 
     @POST("api/v1/topics")
-    Call<Topic> createTopic(@Body Topic request);
+    Call<Topic> createTopic(@Body TopicRequest request);
 
     @PUT("api/v1/topics/{id}")
-    Call<Topic> updateTopic(@Path("id") String id, @Body Topic request);
+    Call<Topic> updateTopic(@Path("id") String id, @Body TopicRequest request);
 
     @DELETE("api/v1/topics/{id}")
     Call<Void> deleteTopic(@Path("id") String id);

@@ -29,6 +29,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.revise.MainActivity;
 import com.revise.R;
+import com.revise.dto.request.TopicRequest;
 import com.revise.model.Topic;
 import com.revise.network.RetrofitClient;
 import com.revise.network.TokenManager;
@@ -195,13 +196,7 @@ public class DashboardFragment extends Fragment {
     }
 
     private void saveOrUpdateTopic(Topic existingTopic, String title, String description, List<String> links, AlertDialog dialog) {
-        Topic payload = new Topic();
-        payload.setTitle(title);
-        payload.setDescription(description);
-
-        // UNCOMMENTED: Attach the links array to the payload
-        payload.setLinks(links);
-
+        TopicRequest payload = new TopicRequest(title,description,links);
         Call<Topic> call = (existingTopic == null)
                 ? apiService.createTopic(payload)
                 : apiService.updateTopic(existingTopic.getId(), payload);
@@ -212,7 +207,7 @@ public class DashboardFragment extends Fragment {
                 if (response.isSuccessful()) {
                     Toast.makeText(getContext(), "Saved successfully!", Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
-                    fetchTopics(); // Instantly refresh the UI
+                    fetchTopics();
                 } else {
                     handleServerError(response.code());
                 }
@@ -285,15 +280,19 @@ public class DashboardFragment extends Fragment {
                 return;
             }
 
-            // Extract text from dynamic links
+            // Extract and Validate text from dynamic links
             List<String> finalLinks = new ArrayList<>();
             for (int i = 0; i < layoutLinks.getChildCount(); i++) {
                 View linkView = layoutLinks.getChildAt(i);
                 EditText etLink = linkView.findViewById(R.id.etLinkUrl);
                 String linkText = etLink.getText().toString().trim();
 
-                // Only add links that are not empty
                 if (!linkText.isEmpty()) {
+                    // Strict Client-Side URL Validation
+                    if (!android.util.Patterns.WEB_URL.matcher(linkText).matches()) {
+                        Toast.makeText(getContext(), "Invalid link: " + linkText + "\nPlease enter a valid URL (e.g., https://...)", Toast.LENGTH_LONG).show();
+                        return; // Stop the save process entirely
+                    }
                     finalLinks.add(linkText);
                 }
             }
