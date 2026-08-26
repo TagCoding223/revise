@@ -52,7 +52,7 @@ public class DashboardFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // NEW: Initialize the Repository
+        // Initialize the Repository
         repository = new TopicRepository(requireContext());
 
         setupThemeToggle(view);
@@ -165,9 +165,8 @@ public class DashboardFragment extends Fragment {
             @Override
             public void onSuccess(Topic data) {
                 Toast.makeText(getContext(), "Saved successfully!", Toast.LENGTH_SHORT).show();
-                fetchTopics(); // Re-read from local database
+                fetchTopics();
             }
-
             @Override
             public void onError(String message) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
@@ -177,7 +176,8 @@ public class DashboardFragment extends Fragment {
         if (existingTopic == null) {
             repository.createTopic(request, callback);
         } else {
-            repository.updateTopic(existingTopic.getId(), request, callback);
+            // Pass the existingTopic object directly
+            repository.updateTopic(existingTopic, request, callback);
         }
     }
 

@@ -99,30 +99,32 @@ public class TopicRepository {
     private void pushOfflineData(List<Topic> unsyncedTopics) {
         List<TopicSyncRequest> batchPayload = new ArrayList<>();
 
+        // Generate an ISO-8601 timestamp string (e.g., "2026-08-27T14:30:00")
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault());
+        String currentIsoDate = sdf.format(new java.util.Date());
+
         for (Topic t : unsyncedTopics) {
             if (t.isDeleted()) {
-                // If deleted offline, run the standard delete route
                 deleteTopic(t.getId(), new RepositoryCallback<Void>() {
                     @Override public void onSuccess(Void data) {}
                     @Override public void onError(String message) {}
                 });
             } else {
-                // Otherwise, package it for the batch sync
+                // Attach the required date fields to satisfy Spring Boot's database constraints
                 batchPayload.add(new TopicSyncRequest(
-                        t.getId(), t.getTitle(), t.getDescription(), t.getLinks(), t.getStage()
+                        t.getId(), t.getTitle(), t.getDescription(), t.getLinks(), t.getStage(),
+                        currentIsoDate, currentIsoDate, currentIsoDate
                 ));
             }
         }
 
         if (batchPayload.isEmpty()) return;
 
-        // Send the batch to Spring Boot
         apiService.pushSyncBatch(batchPayload).enqueue(new Callback<com.revise.dto.response.ApiResponse>() {
             @Override
             public void onResponse(Call<com.revise.dto.response.ApiResponse> call, Response<com.revise.dto.response.ApiResponse> response) {
                 if (response.isSuccessful()) {
                     executorService.execute(() -> {
-                        // Success! Mark them as synced in the local Room DB
                         for (Topic t : unsyncedTopics) {
                             if (!t.isDeleted()) {
                                 t.setSynced(true);
@@ -132,11 +134,8 @@ public class TopicRepository {
                     });
                 }
             }
-
             @Override
-            public void onFailure(Call<com.revise.dto.response.ApiResponse> call, Throwable t) {
-                // Fails silently. They remain isSynced=false and will try again on next launch!
-            }
+            public void onFailure(Call<com.revise.dto.response.ApiResponse> call, Throwable t) {}
         });
     }
 
@@ -178,12 +177,22 @@ public class TopicRepository {
     }
 
     // ==========================================
-    // 3. UPDATE TOPIC
+    // 3. UPDATE TOPIC (Now Fully Optimistic)
     // ==========================================
-    public void updateTopic(String topicId, TopicRequest request, RepositoryCallback<Topic> callback) {
+    // Note: We changed 'String topicId' to 'Topic existingTopic'
+    public void updateTopic(Topic existingTopic, TopicRequest request, RepositoryCallback<Topic> callback) {
         executorService.execute(() -> {
-            // Background Network Sync
-            apiService.updateTopic(topicId, request).enqueue(new Callback<Topic>() {
+            // 1. Optimistic Local Save FIRST
+            existingTopic.setTitle(request.getTitle());
+            existingTopic.setDescription(request.getDescription());
+            existingTopic.setLinks(request.getLinks());
+            existingTopic.setSynced(false);
+
+            topicDao.insertTopic(existingTopic);
+            mainThreadHandler.post(() -> callback.onSuccess(existingTopic));
+
+            // 2. Background Network Sync
+            apiService.updateTopic(existingTopic.getId(), request).enqueue(new Callback<Topic>() {
                 @Override
                 public void onResponse(Call<Topic> call, Response<Topic> response) {
                     if (response.isSuccessful() && response.body() != null) {
@@ -191,16 +200,11 @@ public class TopicRepository {
                             Topic updatedTopic = response.body();
                             updatedTopic.setSynced(true);
                             topicDao.insertTopic(updatedTopic);
-                            mainThreadHandler.post(() -> callback.onSuccess(updatedTopic));
                         });
-                    } else {
-                        callback.onError("Failed to update topic.");
                     }
                 }
                 @Override
-                public void onFailure(Call<Topic> call, Throwable t) {
-                    callback.onError("Network unreachable.");
-                }
+                public void onFailure(Call<Topic> call, Throwable t) {} // Fails silently, stays offline
             });
         });
     }
@@ -250,4 +254,5 @@ public class TopicRepository {
             });
         });
     }
+
 }
