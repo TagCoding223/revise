@@ -32,13 +32,12 @@ import com.revise.ui.dashboard.dialogs.TopicViewDialog;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 public class DashboardFragment extends Fragment {
 
     private RecyclerView rvToday, rvTomorrow, rvUpcoming;
     private TextView tvEmptyToday, tvEmptyTomorrow, tvEmptyUpcoming;
-
-    // NEW: Replace TopicApiService with TopicRepository
+    private SwipeRefreshLayout swipeRefreshLayout;
     private TopicRepository repository;
 
     public DashboardFragment() {}
@@ -54,6 +53,13 @@ public class DashboardFragment extends Fragment {
 
         // Initialize the Repository
         repository = new TopicRepository(requireContext());
+
+        // Initialize and configure the swipe listener
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            // When the user pulls down, manually trigger the repository sync
+            fetchTopics();
+        });
 
         setupThemeToggle(view);
         setupButtons(view);
@@ -93,6 +99,9 @@ public class DashboardFragment extends Fragment {
         repository.getTopics(new TopicRepository.RepositoryCallback<List<Topic>>() {
             @Override
             public void onSuccess(List<Topic> allTopics) {
+                // Stop the spinning animation
+                swipeRefreshLayout.setRefreshing(false);
+
                 List<Topic> today = new ArrayList<>();
                 List<Topic> tomorrow = new ArrayList<>();
                 List<Topic> upcoming = new ArrayList<>();
@@ -115,6 +124,8 @@ public class DashboardFragment extends Fragment {
 
             @Override
             public void onError(String message) {
+                // Stop the spinning animation even if it fails
+                swipeRefreshLayout.setRefreshing(false);
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
