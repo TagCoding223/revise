@@ -99,8 +99,8 @@ public class TopicRepository {
     private void pushOfflineData(List<Topic> unsyncedTopics) {
         List<TopicSyncRequest> batchPayload = new ArrayList<>();
 
-        // Generate an ISO-8601 timestamp string (e.g., "2026-08-27T14:30:00")
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault());
+        // STRICT ISO-8601 formatting to satisfy Spring Boot's LocalDateTime parser
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", java.util.Locale.US);
         String currentIsoDate = sdf.format(new java.util.Date());
 
         for (Topic t : unsyncedTopics) {
@@ -110,7 +110,6 @@ public class TopicRepository {
                     @Override public void onError(String message) {}
                 });
             } else {
-                // Attach the required date fields to satisfy Spring Boot's database constraints
                 batchPayload.add(new TopicSyncRequest(
                         t.getId(), t.getTitle(), t.getDescription(), t.getLinks(), t.getStage(),
                         currentIsoDate, currentIsoDate, currentIsoDate
@@ -134,6 +133,7 @@ public class TopicRepository {
                     });
                 }
             }
+
             @Override
             public void onFailure(Call<com.revise.dto.response.ApiResponse> call, Throwable t) {}
         });
