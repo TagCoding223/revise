@@ -1,9 +1,17 @@
 package com.revise.model;
 
+import androidx.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
 import java.util.List;
 
+@Entity(tableName = "topics")
 public class Topic {
-    private String id;
+
+    @PrimaryKey
+    @NonNull
+    private String id = "";
     private String title;
     private String description;
     private int stage;
