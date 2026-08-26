@@ -24,26 +24,22 @@ import com.revise.MainActivity;
 import com.revise.R;
 import com.revise.dto.request.TopicRequest;
 import com.revise.model.Topic;
-import com.revise.network.RetrofitClient;
 import com.revise.network.TokenManager;
-import com.revise.network.TopicApiService;
+import com.revise.repository.TopicRepository;
 import com.revise.ui.dashboard.dialogs.ActionDialogHelper;
 import com.revise.ui.dashboard.dialogs.TopicFormDialog;
 import com.revise.ui.dashboard.dialogs.TopicViewDialog;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class DashboardFragment extends Fragment {
 
     private RecyclerView rvToday, rvTomorrow, rvUpcoming;
     private TextView tvEmptyToday, tvEmptyTomorrow, tvEmptyUpcoming;
-    private TopicApiService apiService;
+
+    // NEW: Replace TopicApiService with TopicRepository
+    private TopicRepository repository;
 
     public DashboardFragment() {}
 
@@ -55,7 +51,9 @@ public class DashboardFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        apiService = RetrofitClient.getClient(requireContext()).create(TopicApiService.class);
+
+        // NEW: Initialize the Repository
+        repository = new TopicRepository(requireContext());
 
         setupThemeToggle(view);
         setupButtons(view);
@@ -89,38 +87,36 @@ public class DashboardFragment extends Fragment {
     }
 
     // ==========================================
-    // DATA FETCHING & GROUPING
+    // DATA FETCHING & GROUPING (Offline First)
     // ==========================================
     private void fetchTopics() {
-        apiService.getAllTopics().enqueue(new Callback<List<Topic>>() {
+        repository.getTopics(new TopicRepository.RepositoryCallback<List<Topic>>() {
             @Override
-            public void onResponse(Call<List<Topic>> call, Response<List<Topic>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    List<Topic> allTopics = response.body();
-                    List<Topic> today = new ArrayList<>();
-                    List<Topic> tomorrow = new ArrayList<>();
-                    List<Topic> upcoming = new ArrayList<>();
+            public void onSuccess(List<Topic> allTopics) {
+                List<Topic> today = new ArrayList<>();
+                List<Topic> tomorrow = new ArrayList<>();
+                List<Topic> upcoming = new ArrayList<>();
 
-                    for (Topic topic : allTopics) {
-                        if ("today".equals(topic.getCategory())) today.add(topic);
-                        else if ("tomorrow".equals(topic.getCategory())) tomorrow.add(topic);
-                        else upcoming.add(topic);
-                    }
-
-                    updateListState(rvToday, tvEmptyToday, today);
-                    updateListState(rvTomorrow, tvEmptyTomorrow, tomorrow);
-                    updateListState(rvUpcoming, tvEmptyUpcoming, upcoming);
-
-                    TopicAdapter.OnTopicClickListener listener = createTopicClickListener();
-                    rvToday.setAdapter(new TopicAdapter(today, listener));
-                    rvTomorrow.setAdapter(new TopicAdapter(tomorrow, listener));
-                    rvUpcoming.setAdapter(new TopicAdapter(upcoming, listener));
-                } else {
-                    handleServerError(response.code());
+                for (Topic topic : allTopics) {
+                    if ("today".equals(topic.getCategory())) today.add(topic);
+                    else if ("tomorrow".equals(topic.getCategory())) tomorrow.add(topic);
+                    else upcoming.add(topic);
                 }
+
+                updateListState(rvToday, tvEmptyToday, today);
+                updateListState(rvTomorrow, tvEmptyTomorrow, tomorrow);
+                updateListState(rvUpcoming, tvEmptyUpcoming, upcoming);
+
+                TopicAdapter.OnTopicClickListener listener = createTopicClickListener();
+                rvToday.setAdapter(new TopicAdapter(today, listener));
+                rvTomorrow.setAdapter(new TopicAdapter(tomorrow, listener));
+                rvUpcoming.setAdapter(new TopicAdapter(upcoming, listener));
             }
+
             @Override
-            public void onFailure(Call<List<Topic>> call, Throwable t) { handleNetworkError(t); }
+            public void onError(String message) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
@@ -162,51 +158,60 @@ public class DashboardFragment extends Fragment {
     }
 
     // ==========================================
-    // API EXECUTIONS
+    // API EXECUTIONS (Via Repository)
     // ==========================================
     private void saveOrUpdateTopic(TopicRequest request, @Nullable Topic existingTopic) {
-        Call<Topic> call = (existingTopic == null)
-                ? apiService.createTopic(request)
-                : apiService.updateTopic(existingTopic.getId(), request);
-
-        call.enqueue(new Callback<Topic>() {
+        TopicRepository.RepositoryCallback<Topic> callback = new TopicRepository.RepositoryCallback<Topic>() {
             @Override
-            public void onResponse(Call<Topic> call, Response<Topic> response) {
-                if (response.isSuccessful()) fetchTopics();
-                else handleServerError(response.code());
+            public void onSuccess(Topic data) {
+                Toast.makeText(getContext(), "Saved successfully!", Toast.LENGTH_SHORT).show();
+                fetchTopics(); // Re-read from local database
             }
+
             @Override
-            public void onFailure(Call<Topic> call, Throwable t) { handleNetworkError(t); }
-        });
+            public void onError(String message) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        };
+
+        if (existingTopic == null) {
+            repository.createTopic(request, callback);
+        } else {
+            repository.updateTopic(existingTopic.getId(), request, callback);
+        }
     }
 
     private void executeDelete(Topic topic) {
-        apiService.deleteTopic(topic.getId()).enqueue(new Callback<Void>() {
+        repository.deleteTopic(topic.getId(), new TopicRepository.RepositoryCallback<Void>() {
             @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) fetchTopics();
-                else handleServerError(response.code());
+            public void onSuccess(Void data) {
+                fetchTopics();
             }
+
             @Override
-            public void onFailure(Call<Void> call, Throwable t) { handleNetworkError(t); }
+            public void onError(String message) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
     private void executeRevise(Topic topic) {
-        apiService.reviseTopic(topic.getId()).enqueue(new Callback<Topic>() {
+        repository.reviseTopic(topic.getId(), new TopicRepository.RepositoryCallback<Topic>() {
             @Override
-            public void onResponse(Call<Topic> call, Response<Topic> response) {
-                if (response.isSuccessful()) fetchTopics();
-                else handleServerError(response.code());
+            public void onSuccess(Topic data) {
+                Toast.makeText(getContext(), "Revision logged!", Toast.LENGTH_SHORT).show();
+                fetchTopics();
             }
+
             @Override
-            public void onFailure(Call<Topic> call, Throwable t) { handleNetworkError(t); }
+            public void onError(String message) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
     private void executeLogout() {
         new TokenManager(requireContext()).clearTokens();
-        // Clear Profile Cache on logout
         requireContext().getSharedPreferences("ProfileCache", Context.MODE_PRIVATE).edit().clear().apply();
 
         Intent intent = new Intent(requireActivity(), MainActivity.class);
@@ -227,16 +232,5 @@ public class DashboardFragment extends Fragment {
             AppCompatDelegate.setDefaultNightMode(isDarkMode ? AppCompatDelegate.MODE_NIGHT_NO : AppCompatDelegate.MODE_NIGHT_YES);
             prefs.edit().putInt("ThemeMode", isDarkMode ? AppCompatDelegate.MODE_NIGHT_NO : AppCompatDelegate.MODE_NIGHT_YES).apply();
         });
-    }
-
-    private void handleServerError(int code) {
-        if (code >= 500) Toast.makeText(getContext(), "Server error. Please try again later.", Toast.LENGTH_LONG).show();
-        else if (code == 404) Toast.makeText(getContext(), "Topic not found.", Toast.LENGTH_LONG).show();
-        else Toast.makeText(getContext(), "Something went wrong (Code: " + code + ")", Toast.LENGTH_SHORT).show();
-    }
-
-    private void handleNetworkError(Throwable t) {
-        if (t instanceof IOException) Toast.makeText(getContext(), "Network unreachable.", Toast.LENGTH_LONG).show();
-        else Toast.makeText(getContext(), "An unexpected error occurred.", Toast.LENGTH_SHORT).show();
     }
 }

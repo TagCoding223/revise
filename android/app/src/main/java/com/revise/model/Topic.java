@@ -11,7 +11,7 @@ public class Topic {
 
     @PrimaryKey
     @NonNull
-    private String id = "";
+    private String id;
     private String title;
     private String description;
     private int stage;
@@ -44,5 +44,13 @@ public class Topic {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public void setId(@NonNull String id) {
+        this.id = id;
+    }
+
+    public void setStage(int stage) {
+        this.stage = stage;
     }
 }
