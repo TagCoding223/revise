@@ -19,8 +19,13 @@ public interface TopicDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertTopic(Topic topic);
 
-    @Query("SELECT * FROM topics")
+    // Only fetch topics that are not deleted
+    @Query("SELECT * FROM topics WHERE isDeleted = 0")
     List<Topic> getAllTopics();
+
+    // Useful for when we implement background batch-syncing later
+    @Query("SELECT * FROM topics WHERE isSynced = 0")
+    List<Topic> getUnsyncedTopics();
 
     @Query("DELETE FROM topics WHERE id = :topicId")
     void deleteTopic(String topicId);
