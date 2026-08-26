@@ -185,6 +185,8 @@ public class LoginFragment extends Fragment {
                         Toast.makeText(getContext(), "Email unverified. Redirecting...", Toast.LENGTH_LONG).show();
 
                         // TODO: Navigate to OTP Fragment
+                        Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_verifyOtpFragment);
+
                     } else {
                         Toast.makeText(getContext(), "Login Failed: Invalid credentials", Toast.LENGTH_SHORT).show();
                     }
