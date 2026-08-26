@@ -1,9 +1,10 @@
 package com.revise.network;
 
 import com.revise.dto.request.TopicRequest;
+import com.revise.dto.request.TopicSyncRequest;
+import com.revise.dto.response.ApiResponse;
 import com.revise.model.Topic;
 import java.util.List;
-import java.util.Map;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -30,4 +31,7 @@ public interface TopicApiService {
 
     @PATCH("api/v1/topics/{id}/revise")
     Call<Topic> reviseTopic(@Path("id") String id);
+
+    @POST("api/v1/topics/sync/batch")
+    Call<ApiResponse> pushSyncBatch(@Body List<TopicSyncRequest> offlineTopics);
 }
