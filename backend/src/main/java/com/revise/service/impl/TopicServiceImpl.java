@@ -19,6 +19,7 @@ import com.revise.exception.ResourceNotFoundException;
 import com.revise.repository.TopicRepository;
 import com.revise.repository.UserRepository;
 import com.revise.service.TopicService;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,6 +36,8 @@ public class TopicServiceImpl implements TopicService {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         RevisionTopic topic = new RevisionTopic();
+        topic.setId(UUID.randomUUID().toString());
+
         topic.setUser(user);
         topic.setTitle(request.getTitle());
         topic.setDescription(request.getDescription());

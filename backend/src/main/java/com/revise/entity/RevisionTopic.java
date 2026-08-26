@@ -28,7 +28,6 @@ import lombok.NoArgsConstructor;
 public class RevisionTopic {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false, nullable = false, columnDefinition = "VARCHAR(36)")
     private String id;
 
