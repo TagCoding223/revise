@@ -47,6 +47,7 @@ import retrofit2.Response;
 public class DashboardFragment extends Fragment {
 
     private RecyclerView rvToday, rvTomorrow, rvUpcoming;
+    private TextView tvEmptyToday, tvEmptyTomorrow, tvEmptyUpcoming;
     private TopicApiService apiService;
 
     public DashboardFragment() {}
@@ -96,6 +97,11 @@ public class DashboardFragment extends Fragment {
         rvTomorrow.setLayoutManager(new LinearLayoutManager(getContext()));
         rvUpcoming.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        // Initialize Empty State TextViews
+        tvEmptyToday = view.findViewById(R.id.tvEmptyToday);
+        tvEmptyTomorrow = view.findViewById(R.id.tvEmptyTomorrow);
+        tvEmptyUpcoming = view.findViewById(R.id.tvEmptyUpcoming);
+
         // Fetch live data from backend
         fetchTopics();
     }
@@ -124,6 +130,33 @@ public class DashboardFragment extends Fragment {
                         } else {
                             upcoming.add(topic);
                         }
+                    }
+
+                    // Toggle visibility for TODAY
+                    if (today.isEmpty()) {
+                        rvToday.setVisibility(View.GONE);
+                        tvEmptyToday.setVisibility(View.VISIBLE);
+                    } else {
+                        rvToday.setVisibility(View.VISIBLE);
+                        tvEmptyToday.setVisibility(View.GONE);
+                    }
+
+                    // Toggle visibility for TOMORROW
+                    if (tomorrow.isEmpty()) {
+                        rvTomorrow.setVisibility(View.GONE);
+                        tvEmptyTomorrow.setVisibility(View.VISIBLE);
+                    } else {
+                        rvTomorrow.setVisibility(View.VISIBLE);
+                        tvEmptyTomorrow.setVisibility(View.GONE);
+                    }
+
+                    // Toggle visibility for UPCOMING
+                    if (upcoming.isEmpty()) {
+                        rvUpcoming.setVisibility(View.GONE);
+                        tvEmptyUpcoming.setVisibility(View.VISIBLE);
+                    } else {
+                        rvUpcoming.setVisibility(View.VISIBLE);
+                        tvEmptyUpcoming.setVisibility(View.GONE);
                     }
 
                     if (allTopics.isEmpty()) {

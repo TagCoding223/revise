@@ -99,6 +99,17 @@
                 tools:itemCount="2"
                 tools:listitem="@layout/item_topic_card" />
 
+            <!-- Empty State for Today -->
+            <TextView
+                android:id="@+id/tvEmptyToday"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No topic present for today revision"
+                android:textAlignment="center"
+                android:padding="16dp"
+                android:textColor="@android:color/darker_gray"
+                android:visibility="gone" />
+
             <!-- Tomorrow Section -->
             <TextView
                 android:layout_width="wrap_content"
@@ -119,6 +130,17 @@
                 tools:itemCount="1"
                 tools:listitem="@layout/item_topic_card" />
 
+            <!-- Empty State for Tomorrow -->
+            <TextView
+                android:id="@+id/tvEmptyTomorrow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No topic scheduled for tomorrow"
+                android:textAlignment="center"
+                android:padding="16dp"
+                android:textColor="@android:color/darker_gray"
+                android:visibility="gone" />
+
             <!-- Upcoming Section -->
             <TextView
                 android:layout_width="wrap_content"
@@ -138,6 +160,17 @@
                 android:nestedScrollingEnabled="false"
                 tools:itemCount="1"
                 tools:listitem="@layout/item_topic_card" />
+
+            <!-- Empty State for Upcoming -->
+            <TextView
+                android:id="@+id/tvEmptyUpcoming"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No upcoming topics found"
+                android:textAlignment="center"
+                android:padding="16dp"
+                android:textColor="@android:color/darker_gray"
+                android:visibility="gone" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
