@@ -12,6 +12,7 @@ import com.revise.network.RetrofitClient;
 import com.revise.network.TopicApiService;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -30,43 +31,37 @@ public class TopicRepository {
         AppDatabase db = AppDatabase.getDatabase(context);
         this.topicDao = db.topicDao();
         this.apiService = RetrofitClient.getClient(context).create(TopicApiService.class);
-
-        // Executes database operations in the background
         this.executorService = Executors.newSingleThreadExecutor();
-        // Pushes the results back to the Main UI Thread so your RecyclerView can update
         this.mainThreadHandler = new Handler(Looper.getMainLooper());
     }
 
-    // A custom callback interface so the UI knows when the Repository finishes its work
     public interface RepositoryCallback<T> {
         void onSuccess(T data);
         void onError(String message);
     }
 
     // ==========================================
-    // 1. FETCH TOPICS (The Offline-First Logic)
+    // 1. FETCH TOPICS
     // ==========================================
     public void getTopics(RepositoryCallback<List<Topic>> callback) {
         executorService.execute(() -> {
-            // STEP 1: Instantly load whatever is saved offline in the database
             List<Topic> localTopics = topicDao.getAllTopics();
             if (localTopics != null && !localTopics.isEmpty()) {
                 mainThreadHandler.post(() -> callback.onSuccess(localTopics));
             }
 
-            // STEP 2: Silently reach out to the backend for fresh data
             apiService.getAllTopics().enqueue(new Callback<List<Topic>>() {
                 @Override
                 public void onResponse(Call<List<Topic>> call, Response<List<Topic>> response) {
                     if (response.isSuccessful() && response.body() != null) {
-                        List<Topic> remoteTopics = response.body();
-
-                        // Save the fresh data to Room so it's ready for next time
                         executorService.execute(() -> {
-                            topicDao.clearAll(); // Clear old deleted records
+                            List<Topic> remoteTopics = response.body();
+                            // Ensure the remote topics are marked as synced
+                            for (Topic t : remoteTopics) { t.setSynced(true); }
+
+                            topicDao.clearAll();
                             topicDao.insertTopics(remoteTopics);
 
-                            // Send the updated data back to the UI
                             mainThreadHandler.post(() -> callback.onSuccess(remoteTopics));
                         });
                     }
@@ -74,8 +69,6 @@ public class TopicRepository {
 
                 @Override
                 public void onFailure(Call<List<Topic>> call, Throwable t) {
-                    // If the network fails, and we had no offline data, tell the UI there's an error.
-                    // If we *did* have offline data, the user already saw it in Step 1!
                     if (localTopics == null || localTopics.isEmpty()) {
                         mainThreadHandler.post(() -> callback.onError("Network offline. No local data found."));
                     }
@@ -88,26 +81,36 @@ public class TopicRepository {
     // 2. CREATE TOPIC
     // ==========================================
     public void createTopic(TopicRequest request, RepositoryCallback<Topic> callback) {
-        apiService.createTopic(request).enqueue(new Callback<Topic>() {
-            @Override
-            public void onResponse(Call<Topic> call, Response<Topic> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    Topic newTopic = response.body();
+        executorService.execute(() -> {
+            // Optimistic Local Save
+            Topic localTopic = new Topic();
+            localTopic.setId(UUID.randomUUID().toString());
+            localTopic.setTitle(request.getTitle());
+            localTopic.setDescription(request.getDescription());
+            localTopic.setLinks(request.getLinks());
+            localTopic.setCategory("today");
+            localTopic.setStage(1);
+            localTopic.setSynced(false);
 
-                    // Save ONLY this new topic to the local DB, avoiding a full re-fetch
-                    executorService.execute(() -> {
-                        topicDao.insertTopic(newTopic);
-                        mainThreadHandler.post(() -> callback.onSuccess(newTopic));
-                    });
-                } else {
-                    callback.onError("Failed to create topic on server.");
+            topicDao.insertTopic(localTopic);
+            mainThreadHandler.post(() -> callback.onSuccess(localTopic));
+
+            // Background Network Sync
+            apiService.createTopic(request).enqueue(new Callback<Topic>() {
+                @Override
+                public void onResponse(Call<Topic> call, Response<Topic> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        executorService.execute(() -> {
+                            topicDao.deleteTopic(localTopic.getId()); // Remove temp local
+                            Topic serverTopic = response.body();
+                            serverTopic.setSynced(true);
+                            topicDao.insertTopic(serverTopic);
+                        });
+                    }
                 }
-            }
-
-            @Override
-            public void onFailure(Call<Topic> call, Throwable t) {
-                callback.onError("Network unreachable.");
-            }
+                @Override
+                public void onFailure(Call<Topic> call, Throwable t) {}
+            });
         });
     }
 
@@ -115,26 +118,27 @@ public class TopicRepository {
     // 3. UPDATE TOPIC
     // ==========================================
     public void updateTopic(String topicId, TopicRequest request, RepositoryCallback<Topic> callback) {
-        apiService.updateTopic(topicId, request).enqueue(new Callback<Topic>() {
-            @Override
-            public void onResponse(Call<Topic> call, Response<Topic> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    Topic updatedTopic = response.body();
-
-                    // Overwrite the existing local record
-                    executorService.execute(() -> {
-                        topicDao.insertTopic(updatedTopic);
-                        mainThreadHandler.post(() -> callback.onSuccess(updatedTopic));
-                    });
-                } else {
-                    callback.onError("Failed to update topic.");
+        executorService.execute(() -> {
+            // Background Network Sync
+            apiService.updateTopic(topicId, request).enqueue(new Callback<Topic>() {
+                @Override
+                public void onResponse(Call<Topic> call, Response<Topic> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        executorService.execute(() -> {
+                            Topic updatedTopic = response.body();
+                            updatedTopic.setSynced(true);
+                            topicDao.insertTopic(updatedTopic);
+                            mainThreadHandler.post(() -> callback.onSuccess(updatedTopic));
+                        });
+                    } else {
+                        callback.onError("Failed to update topic.");
+                    }
                 }
-            }
-
-            @Override
-            public void onFailure(Call<Topic> call, Throwable t) {
-                callback.onError("Network unreachable.");
-            }
+                @Override
+                public void onFailure(Call<Topic> call, Throwable t) {
+                    callback.onError("Network unreachable.");
+                }
+            });
         });
     }
 
@@ -142,24 +146,18 @@ public class TopicRepository {
     // 4. DELETE TOPIC
     // ==========================================
     public void deleteTopic(String topicId, RepositoryCallback<Void> callback) {
-        apiService.deleteTopic(topicId).enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    // Remove it locally without fetching the whole list again
-                    executorService.execute(() -> {
-                        topicDao.deleteTopic(topicId);
-                        mainThreadHandler.post(() -> callback.onSuccess(null));
-                    });
-                } else {
-                    callback.onError("Failed to delete topic.");
-                }
-            }
+        executorService.execute(() -> {
+            // Optimistic Local Delete
+            topicDao.deleteTopic(topicId);
+            mainThreadHandler.post(() -> callback.onSuccess(null));
 
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                callback.onError("Network unreachable.");
-            }
+            // Background Network Sync
+            apiService.deleteTopic(topicId).enqueue(new Callback<Void>() {
+                @Override
+                public void onResponse(Call<Void> call, Response<Void> response) {}
+                @Override
+                public void onFailure(Call<Void> call, Throwable t) {}
+            });
         });
     }
 
@@ -167,23 +165,26 @@ public class TopicRepository {
     // 5. REVISE TOPIC
     // ==========================================
     public void reviseTopic(String topicId, RepositoryCallback<Topic> callback) {
-        apiService.reviseTopic(topicId).enqueue(new Callback<Topic>() {
-            @Override
-            public void onResponse(Call<Topic> call, Response<Topic> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    Topic revisedTopic = response.body();
-                    executorService.execute(() -> {
-                        topicDao.insertTopic(revisedTopic);
-                        mainThreadHandler.post(() -> callback.onSuccess(revisedTopic));
-                    });
-                } else {
-                    callback.onError("Failed to revise topic.");
+        executorService.execute(() -> {
+            apiService.reviseTopic(topicId).enqueue(new Callback<Topic>() {
+                @Override
+                public void onResponse(Call<Topic> call, Response<Topic> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        executorService.execute(() -> {
+                            Topic revisedTopic = response.body();
+                            revisedTopic.setSynced(true);
+                            topicDao.insertTopic(revisedTopic);
+                            mainThreadHandler.post(() -> callback.onSuccess(revisedTopic));
+                        });
+                    } else {
+                        callback.onError("Failed to revise topic.");
+                    }
                 }
-            }
-            @Override
-            public void onFailure(Call<Topic> call, Throwable t) {
-                callback.onError("Network unreachable.");
-            }
+                @Override
+                public void onFailure(Call<Topic> call, Throwable t) {
+                    callback.onError("Network unreachable.");
+                }
+            });
         });
     }
 }

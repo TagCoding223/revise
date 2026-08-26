@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -17,17 +18,17 @@ import com.revise.model.Topic;
 import java.util.List;
 
 public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHolder> {
-    // Create an interface to handle clicks
+
     public interface OnTopicClickListener {
         void onViewClick(Topic topic);
         void onEditClick(Topic topic);
         void onDeleteClick(Topic topic);
         void onReviseClick(Topic topic);
     }
-    private final List<Topic> topicList;
-    private final OnTopicClickListener listener; //  Add the listener variable
 
-    // Update constructor to require the listener
+    private final List<Topic> topicList;
+    private final OnTopicClickListener listener;
+
     public TopicAdapter(List<Topic> topicList, OnTopicClickListener listener) {
         this.topicList = topicList;
         this.listener = listener;
@@ -48,22 +49,23 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
         holder.tvTopicDesc.setText(topic.getDescription());
         holder.tvStageBadge.setText("Stage " + topic.getStage());
 
+        // Toggle the Offline Badge
+        holder.ivOfflineBadge.setVisibility(topic.isSynced() ? View.GONE : View.VISIBLE);
+
         // Apply active/disabled UI logic
         if (!topic.getCategory().equals("today")) {
-            // Fade the card and disable the revise button for tomorrow/upcoming
             holder.cardContainer.setAlpha(0.6f);
             holder.btnRevise.setEnabled(false);
-            holder.btnRevise.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0"))); // Light gray
+            holder.btnRevise.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0")));
             holder.btnRevise.setTextColor(Color.parseColor("#94A3B8"));
         } else {
-            // Active state
             holder.cardContainer.setAlpha(1.0f);
             holder.btnRevise.setEnabled(true);
-            holder.btnRevise.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#2563EB"))); // Primary blue
+            holder.btnRevise.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#2563EB")));
             holder.btnRevise.setTextColor(Color.WHITE);
         }
 
-        // 4. Wire the buttons to the listener interface instead of Toasts
+        // Wire the buttons to the listener
         holder.btnView.setOnClickListener(v -> listener.onViewClick(topic));
         holder.btnEdit.setOnClickListener(v -> listener.onEditClick(topic));
         holder.btnDelete.setOnClickListener(v -> listener.onDeleteClick(topic));
@@ -78,6 +80,7 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
     static class TopicViewHolder extends RecyclerView.ViewHolder {
         MaterialCardView cardContainer;
         TextView tvTopicTitle, tvTopicDesc, tvStageBadge;
+        ImageView ivOfflineBadge;
         MaterialButton btnRevise;
         View btnView, btnEdit, btnDelete;
 
@@ -87,6 +90,7 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
             tvTopicTitle = itemView.findViewById(R.id.tvTopicTitle);
             tvTopicDesc = itemView.findViewById(R.id.tvTopicDesc);
             tvStageBadge = itemView.findViewById(R.id.tvStageBadge);
+            ivOfflineBadge = itemView.findViewById(R.id.ivOfflineBadge);
             btnRevise = itemView.findViewById(R.id.btnRevise);
             btnView = itemView.findViewById(R.id.btnView);
             btnEdit = itemView.findViewById(R.id.btnEdit);
