@@ -25,7 +25,7 @@
         <!-- Action to travel from Login to VerifyOtp -->
         <action
             android:id="@+id/action_loginFragment_to_verifyOtpFragment"
-            app:destination="@id/loginFragment" />
+            app:destination="@id/verifyOtpFragment" />
     </fragment>
 
     <!-- Signup Screen -->
