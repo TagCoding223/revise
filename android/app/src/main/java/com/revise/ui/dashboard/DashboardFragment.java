@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,6 +51,7 @@ public class DashboardFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        checkNotificationPermission();
 
         // Initialize the Repository
         repository = new TopicRepository(requireContext());
@@ -66,6 +68,7 @@ public class DashboardFragment extends Fragment {
         setupRecyclerViews(view);
 
         fetchTopics();
+        scheduleDailyReminder();
     }
 
     private void setupButtons(View view) {
@@ -243,5 +246,46 @@ public class DashboardFragment extends Fragment {
             AppCompatDelegate.setDefaultNightMode(isDarkMode ? AppCompatDelegate.MODE_NIGHT_NO : AppCompatDelegate.MODE_NIGHT_YES);
             prefs.edit().putInt("ThemeMode", isDarkMode ? AppCompatDelegate.MODE_NIGHT_NO : AppCompatDelegate.MODE_NIGHT_YES).apply();
         });
+    }
+
+    // For Notification
+    private void scheduleDailyReminder() {
+        androidx.work.PeriodicWorkRequest revisionWorkRequest =
+                new androidx.work.PeriodicWorkRequest.Builder(
+                        com.revise.workers.RevisionNotificationWorker.class,
+                        24, java.util.concurrent.TimeUnit.HOURS)
+                        .build();
+
+        androidx.work.WorkManager.getInstance(requireContext())
+                .enqueueUniquePeriodicWork(
+                        "DailyRevisionReminder",
+                        androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+                        revisionWorkRequest
+                );
+    }
+    private final androidx.activity.result.ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new androidx.activity.result.contract.ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    scheduleDailyReminder();
+                } else {
+                    Toast.makeText(getContext(), "Notifications disabled. You won't receive daily revision alerts.", Toast.LENGTH_LONG).show();
+                }
+            });
+
+    private void checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(
+                    requireContext(), android.Manifest.permission.POST_NOTIFICATIONS) ==
+                    android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                scheduleDailyReminder();
+            } else if (shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS)) {
+                // Optional: Explain why notifications are helpful
+                requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS);
+            } else {
+                requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS);
+            }
+        } else {
+            scheduleDailyReminder();
+        }
     }
 }
