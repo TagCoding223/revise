@@ -13,6 +13,7 @@ import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface TopicApiService {
 
@@ -34,4 +35,7 @@ public interface TopicApiService {
 
     @POST("api/v1/topics/sync/batch")
     Call<ApiResponse> pushSyncBatch(@Body List<TopicSyncRequest> offlineTopics);
+
+    @GET("api/v1/topics/sync")
+    Call<java.util.List<com.revise.model.Topic>> pullSync(@Query("since") String sinceDate);
 }
