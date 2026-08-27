@@ -11,19 +11,22 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken'); // NEW
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     setUser(null);
   };
 
   useEffect(() => {
     const initializeSession = () => {
-      const storedToken = localStorage.getItem('jwt_token');
-      const storedUserId = localStorage.getItem('user_id');
+      const storedToken = localStorage.getItem('token');
+      const storedUserString = localStorage.getItem('user');
 
-      if (storedToken && storedUserId) {
+      if (storedToken && storedUserString) {
+        // Parse the stringified user object back into JSON
+        const storedUser = JSON.parse(storedUserString);
+
         axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-        setUser({ token: storedToken, userId: storedUserId });
+        setUser(storedUser);
       }
       setLoading(false);
     };
