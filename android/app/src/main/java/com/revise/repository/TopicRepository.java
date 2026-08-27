@@ -13,7 +13,6 @@ import com.revise.network.RetrofitClient;
 import com.revise.network.TopicApiService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import retrofit2.Call;
@@ -77,19 +76,13 @@ public class TopicRepository {
         String currentIsoDate = sdf.format(new java.util.Date());
 
         for (Topic t : unsyncedTopics) {
-            if (t.isDeleted()) {
-                deleteTopic(t.getId(), new RepositoryCallback<Void>() {
-                    @Override public void onSuccess(Void data) {}
-                    @Override public void onError(String message) {}
-                });
-            } else {
-                batchPayload.add(new TopicSyncRequest(
-                        t.getId(), t.getTitle(), t.getDescription(), t.getLinks(), t.getStage(),
-                        t.getLastRevisionDate() != null ? t.getLastRevisionDate() : currentIsoDate,
-                        t.getNextRevisionDate() != null ? t.getNextRevisionDate() : currentIsoDate,
-                        currentIsoDate
-                ));
-            }
+            batchPayload.add(new TopicSyncRequest(
+                    t.getId(), t.getTitle(), t.getDescription(), t.getLinks(), t.getStage(),
+                    t.getLastRevisionDate() != null ? t.getLastRevisionDate() : currentIsoDate,
+                    t.getNextRevisionDate() != null ? t.getNextRevisionDate() : currentIsoDate,
+                    currentIsoDate,
+                    t.isDeleted() // Pass the soft-delete flag to Spring Boot
+            ));
         }
 
         if (batchPayload.isEmpty()) {
@@ -102,18 +95,18 @@ public class TopicRepository {
             public void onResponse(Call<com.revise.dto.response.ApiResponse> call, Response<com.revise.dto.response.ApiResponse> response) {
                 if (response.isSuccessful()) {
                     executorService.execute(() -> {
-                        // Mark as synced locally
                         for (Topic t : unsyncedTopics) {
-                            if (!t.isDeleted()) {
+                            if (t.isDeleted()) {
+                                // Once the server confirms it received the deletion, hard delete it locally to save space
+                                topicDao.deleteTopic(t.getId());
+                            } else {
                                 t.setSynced(true);
                                 topicDao.insertTopic(t);
                             }
                         }
-                        // Move to Phase 2: Pull Deltas
                         pullDeltaSync(callback);
                     });
                 } else {
-                    // Push failed, but we should still try to pull updates
                     pullDeltaSync(callback);
                 }
             }
@@ -125,7 +118,7 @@ public class TopicRepository {
     }
 
     // ==========================================
-    // 3. PULL SYNC (Step 2 of Two-Way Sync)
+    // 3. PULL SYNC (Step 2 of Two-Way Sync & Handles Web Deletions)
     // ==========================================
     private void pullDeltaSync(RepositoryCallback<List<Topic>> callback) {
         String lastSyncTime = syncPrefs.getString(PREF_LAST_SYNC, DEFAULT_TIMESTAMP);
@@ -138,16 +131,20 @@ public class TopicRepository {
                         List<Topic> deltaTopics = response.body();
 
                         if (!deltaTopics.isEmpty()) {
-                            // Room's OnConflictStrategy.REPLACE automatically handles updates vs new inserts!
-                            for (Topic t : deltaTopics) { t.setSynced(true); }
-                            topicDao.insertTopics(deltaTopics);
+                            for (Topic t : deltaTopics) {
+                                // If the web dashboard deleted this topic, hard delete it locally
+                                if (t.isDeleted()) {
+                                    topicDao.deleteTopic(t.getId());
+                                } else {
+                                    t.setSynced(true);
+                                    topicDao.insertTopic(t);
+                                }
+                            }
                         }
 
-                        // Record the exact moment this sync finished
                         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", java.util.Locale.US);
                         syncPrefs.edit().putString(PREF_LAST_SYNC, sdf.format(new java.util.Date())).apply();
 
-                        // Refresh UI with the finalized database state
                         List<Topic> finalTopics = topicDao.getAllTopics();
                         mainThreadHandler.post(() -> callback.onSuccess(finalTopics));
                     });
@@ -155,10 +152,8 @@ public class TopicRepository {
                     mainThreadHandler.post(() -> callback.onError("Failed to fetch recent updates."));
                 }
             }
-
             @Override
             public void onFailure(Call<List<Topic>> call, Throwable t) {
-                // Fails silently if offline; the user is already viewing the cached data.
                 mainThreadHandler.post(() -> callback.onError("Network offline. Displaying local data."));
             }
         });
@@ -224,21 +219,23 @@ public class TopicRepository {
     }
 
     // ==========================================
-    // 6. DELETE TOPIC
+    // 6. DELETE TOPIC (Fully Offline/Optimistic)
     // ==========================================
     public void deleteTopic(String topicId, RepositoryCallback<Void> callback) {
         executorService.execute(() -> {
-            // Optimistic Local Delete
-            topicDao.deleteTopic(topicId);
-            mainThreadHandler.post(() -> callback.onSuccess(null));
+            // 1. Soft delete locally by updating the flag
+            List<Topic> all = topicDao.getAllTopics();
+            for (Topic t : all) {
+                if (t.getId().equals(topicId)) {
+                    t.setDeleted(true);
+                    t.setSynced(false);
+                    topicDao.insertTopic(t);
+                    break;
+                }
+            }
 
-            // Background Network Sync
-            apiService.deleteTopic(topicId).enqueue(new Callback<Void>() {
-                @Override
-                public void onResponse(Call<Void> call, Response<Void> response) {}
-                @Override
-                public void onFailure(Call<Void> call, Throwable t) {}
-            });
+            // 2. Instantly update UI and trigger the Master Sync Orchestrator
+            mainThreadHandler.post(() -> callback.onSuccess(null));
         });
     }
 

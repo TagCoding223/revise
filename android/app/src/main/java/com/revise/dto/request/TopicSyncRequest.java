@@ -11,8 +11,9 @@ public class TopicSyncRequest {
     private String lastRevisionDate;
     private String nextRevisionDate;
     private String updatedAt;
+    private boolean deleted;
 
-    public TopicSyncRequest(String id, String title, String description, List<String> links, int stage, String lastRevisionDate, String nextRevisionDate, String updatedAt) {
+    public TopicSyncRequest(String id, String title, String description, List<String> links, int stage, String lastRevisionDate, String nextRevisionDate, String updatedAt, boolean deleted) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -21,6 +22,7 @@ public class TopicSyncRequest {
         this.lastRevisionDate = lastRevisionDate;
         this.nextRevisionDate = nextRevisionDate;
         this.updatedAt = updatedAt;
+        this.deleted = deleted;
     }
 
     // Getters
