@@ -77,12 +77,6 @@ public class VerifyOtpFragment extends Fragment {
         setupOtpInputs();
         startTimer();
 
-        // Handle Resend Click
-        tvResend.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "A new code has been sent.", Toast.LENGTH_SHORT).show();
-            startTimer();
-        });
-
         // Handle Verify Click
         btnVerify.setOnClickListener(v -> attemptVerification(view));
         tvResend.setOnClickListener(v -> attemptResendOtp());
@@ -104,6 +98,11 @@ public class VerifyOtpFragment extends Fragment {
             public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(getContext(), "New OTP sent!", Toast.LENGTH_SHORT).show();
+
+                    // THESE TWO LINES to reset the button for the next time it appears
+                    tvResend.setEnabled(true);
+                    tvResend.setText("Resend OTP");
+
                     startTimer(); // Restart the 130-second cooldown
                 } else {
                     tvResend.setEnabled(true);
