@@ -18,6 +18,7 @@ public class TopicSyncRequest {
     
     private LocalDateTime lastRevisionDate;
     private LocalDateTime nextRevisionDate;
+    private boolean deleted;
     
     // Crucial for the "Last Write Wins" conflict resolution
     private LocalDateTime updatedAt;

@@ -16,7 +16,14 @@ public interface TopicRepository extends JpaRepository<RevisionTopic, String>{
     // This translates to: SELECT * FROM topics WHERE user_id = ? AND next_revision_date <= ?
     List<RevisionTopic> findAllByUserIdAndNextRevisionDateLessThanEqual(String userId, LocalDateTime date);
 
-    // Pull Sync Query for Android
+    // Pull Sync Query for Android: Fetch EVERYTHING updated recently, including deleted ones!
     // Translates to: SELECT * FROM topics WHERE user_id = ? AND updated_at >= ?
     List<RevisionTopic> findByUserIdAndUpdatedAtGreaterThanEqual(String userId, LocalDateTime since);
+
+    // Web Dashboard: Only fetch active topics
+    List<RevisionTopic> findAllByUserIdAndIsDeletedFalse(String userId);
+    
+    // Revise All Today: Only fetch active topics
+    List<RevisionTopic> findAllByUserIdAndNextRevisionDateLessThanEqualAndIsDeletedFalse(String userId, LocalDateTime date);
+
 }
