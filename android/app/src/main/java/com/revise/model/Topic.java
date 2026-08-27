@@ -16,6 +16,8 @@ public class Topic {
     private String description;
     private int stage;
     private String category; // "today", "tomorrow", "other"
+    private String lastRevisionDate;
+    private String nextRevisionDate;
     private List<String> links;
 
     public Topic() {
@@ -64,4 +66,10 @@ public class Topic {
 
     public boolean isDeleted() { return isDeleted; }
     public void setDeleted(boolean deleted) { isDeleted = deleted; }
+
+    public String getLastRevisionDate() { return lastRevisionDate; }
+    public String getNextRevisionDate() { return nextRevisionDate; }
+
+    public void setLastRevisionDate(String lastRevisionDate) { this.lastRevisionDate = lastRevisionDate; }
+    public void setNextRevisionDate(String nextRevisionDate) { this.nextRevisionDate = nextRevisionDate; }
 }
