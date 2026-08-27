@@ -154,9 +154,9 @@ public class TopicRepository {
     // ==========================================
     public void createTopic(TopicRequest request, RepositoryCallback<Topic> callback) {
         executorService.execute(() -> {
-            // Optimistic Local Save
+            // 1. Optimistic Local Save ONLY
             Topic localTopic = new Topic();
-            localTopic.setId(UUID.randomUUID().toString());
+            localTopic.setId(java.util.UUID.randomUUID().toString()); // Android is the master of IDs
             localTopic.setTitle(request.getTitle());
             localTopic.setDescription(request.getDescription());
             localTopic.setLinks(request.getLinks());
@@ -165,24 +165,13 @@ public class TopicRepository {
             localTopic.setSynced(false);
 
             topicDao.insertTopic(localTopic);
+
+            // 2. Update UI. The DashboardFragment will automatically trigger fetchTopics(),
+            // which will instantly push this new topic via the batch sync!
             mainThreadHandler.post(() -> callback.onSuccess(localTopic));
 
-            // Background Network Sync
-            apiService.createTopic(request).enqueue(new Callback<Topic>() {
-                @Override
-                public void onResponse(Call<Topic> call, Response<Topic> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        executorService.execute(() -> {
-                            topicDao.deleteTopic(localTopic.getId()); // Remove temp local
-                            Topic serverTopic = response.body();
-                            serverTopic.setSynced(true);
-                            topicDao.insertTopic(serverTopic);
-                        });
-                    }
-                }
-                @Override
-                public void onFailure(Call<Topic> call, Throwable t) {}
-            });
+            // NOTE: The apiService.createTopic(...) call has been completely removed
+            // to prevent race conditions with the batch sync.
         });
     }
 
