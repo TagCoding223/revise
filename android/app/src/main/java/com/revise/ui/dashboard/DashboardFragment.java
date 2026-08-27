@@ -207,7 +207,7 @@ public class DashboardFragment extends Fragment {
     }
 
     private void executeRevise(Topic topic) {
-        repository.reviseTopic(topic.getId(), new TopicRepository.RepositoryCallback<Topic>() {
+        repository.reviseTopic(topic, new TopicRepository.RepositoryCallback<Topic>() {
             @Override
             public void onSuccess(Topic data) {
                 Toast.makeText(getContext(), "Revision logged!", Toast.LENGTH_SHORT).show();

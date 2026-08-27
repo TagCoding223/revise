@@ -111,8 +111,14 @@ public class TopicRepository {
                 });
             } else {
                 batchPayload.add(new TopicSyncRequest(
-                        t.getId(), t.getTitle(), t.getDescription(), t.getLinks(), t.getStage(),
-                        currentIsoDate, currentIsoDate, currentIsoDate
+                        t.getId(),
+                        t.getTitle(),
+                        t.getDescription(),
+                        t.getLinks(),
+                        t.getStage(),
+                        t.getLastRevisionDate() != null ? t.getLastRevisionDate() : currentIsoDate,
+                        t.getNextRevisionDate() != null ? t.getNextRevisionDate() : currentIsoDate,
+                        currentIsoDate // Last Write Wins Conflict Date
                 ));
             }
         }
@@ -233,30 +239,64 @@ public class TopicRepository {
     }
 
     // ==========================================
-    // 5. REVISE TOPIC
+    // 5. REVISE TOPIC (Fully Optimistic)
     // ==========================================
-    public void reviseTopic(String topicId, RepositoryCallback<Topic> callback) {
+    public void reviseTopic(Topic existingTopic, RepositoryCallback<Topic> callback) {
         executorService.execute(() -> {
-            apiService.reviseTopic(topicId).enqueue(new Callback<Topic>() {
+            // 1. Optimistic Local Update
+            int newStage = existingTopic.getStage() + 1;
+            existingTopic.setStage(newStage);
+
+            // Apply Spaced Repetition Logic
+            int daysToAdd = calculateSpaceRepetitionInterval(newStage);
+
+            // Format dates accurately for Spring Boot
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", java.util.Locale.US);
+            java.util.Calendar calendar = java.util.Calendar.getInstance();
+
+            existingTopic.setLastRevisionDate(sdf.format(calendar.getTime())); // Revised right now
+
+            calendar.add(java.util.Calendar.DAY_OF_YEAR, daysToAdd);
+            existingTopic.setNextRevisionDate(sdf.format(calendar.getTime())); // Next due date
+
+            // Dynamically update UI category so it disappears from the "Today" list instantly
+            existingTopic.setCategory(daysToAdd == 1 ? "tomorrow" : "other");
+            existingTopic.setSynced(false);
+
+            topicDao.insertTopic(existingTopic);
+            mainThreadHandler.post(() -> callback.onSuccess(existingTopic));
+
+            // 2. Background Network Sync
+            apiService.reviseTopic(existingTopic.getId()).enqueue(new Callback<Topic>() {
                 @Override
                 public void onResponse(Call<Topic> call, Response<Topic> response) {
                     if (response.isSuccessful() && response.body() != null) {
                         executorService.execute(() -> {
-                            Topic revisedTopic = response.body();
-                            revisedTopic.setSynced(true);
-                            topicDao.insertTopic(revisedTopic);
-                            mainThreadHandler.post(() -> callback.onSuccess(revisedTopic));
+                            Topic serverTopic = response.body();
+                            serverTopic.setSynced(true);
+                            topicDao.insertTopic(serverTopic);
                         });
-                    } else {
-                        callback.onError("Failed to revise topic.");
                     }
                 }
                 @Override
                 public void onFailure(Call<Topic> call, Throwable t) {
-                    callback.onError("Network unreachable.");
+                    // Fails silently. It remains isSynced=false and will ride the batch sync later!
                 }
             });
         });
     }
 
+    private int calculateSpaceRepetitionInterval(int stage) {
+        switch (stage) {
+            case 1: return 1;
+            case 2: return 3;
+            case 3: return 7;
+            case 4: return 16;
+            case 5: return 35;
+            case 6: return 120;
+            case 7: return 180;
+            case 8: return 365;
+            default: return 730;
+        }
+    }
 }
