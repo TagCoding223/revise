@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 
 import android.util.Log;
@@ -131,8 +132,15 @@ public class SignupFragment extends Fragment {
 
                     Toast.makeText(getContext(), "Account created successfully!", Toast.LENGTH_SHORT).show();
 
-                    // Navigate directly to Dashboard (Google accounts are automatically verified)
-                    Navigation.findNavController(view).navigate(R.id.action_signupFragment_to_dashboardFragment);
+                    NavOptions navOptions = new NavOptions.Builder()
+                            .setPopUpTo(R.id.signupFragment, true) // Destroys the login fragment in the backstack
+                            .build();
+
+                    Navigation.findNavController(requireView()).navigate(
+                            R.id.action_signupFragment_to_dashboardFragment,
+                            null,
+                            navOptions
+                    );
                 } else {
                     Toast.makeText(getContext(), "Google Authentication Failed", Toast.LENGTH_SHORT).show();
                 }
@@ -213,13 +221,6 @@ public class SignupFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     AuthResponse authData = response.body();
                     Toast.makeText(getContext(), "Signup successful! Check your email.", Toast.LENGTH_LONG).show();
-
-                    TokenManager tokenManager = new TokenManager(requireContext());
-                    tokenManager.saveTokens(
-                            authData.getToken(),
-                            authData.getRefreshToken(),
-                            authData.getUserId()
-                    );
 
                     // Package the email to pass to the OTP screen
                     Bundle bundle = new Bundle();

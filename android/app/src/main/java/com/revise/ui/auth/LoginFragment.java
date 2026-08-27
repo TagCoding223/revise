@@ -36,6 +36,7 @@ import com.revise.network.TokenManager;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import androidx.navigation.NavOptions;
 
 public class LoginFragment extends Fragment {
 
@@ -121,7 +122,17 @@ public class LoginFragment extends Fragment {
                     );
 
                     Toast.makeText(getContext(), "Welcome!", Toast.LENGTH_SHORT).show();
-                    Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_dashboardFragment);
+
+                    // Inside your successful login/signup callback:
+                    NavOptions navOptions = new NavOptions.Builder()
+                            .setPopUpTo(R.id.loginFragment, true) // Destroys the login fragment in the backstack
+                            .build();
+
+                    Navigation.findNavController(requireView()).navigate(
+                            R.id.action_loginFragment_to_dashboardFragment,
+                            null,
+                            navOptions
+                    );
                 } else {
                     Toast.makeText(getContext(), "Backend Authentication Failed", Toast.LENGTH_SHORT).show();
                 }
@@ -178,7 +189,15 @@ public class LoginFragment extends Fragment {
                     Toast.makeText(getContext(), "Welcome back!", Toast.LENGTH_SHORT).show();
 
                     // Navigate to Dashboard
-                    Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_dashboardFragment);
+                    NavOptions navOptions = new NavOptions.Builder()
+                            .setPopUpTo(R.id.loginFragment, true) // Destroys the login fragment in the backstack
+                            .build();
+
+                    Navigation.findNavController(requireView()).navigate(
+                            R.id.action_loginFragment_to_dashboardFragment,
+                            null,
+                            navOptions
+                    );
                 } else {
                     // Handle 401 Unauthorized or 403 Forbidden
                     if (response.code() == 403) {
@@ -188,8 +207,17 @@ public class LoginFragment extends Fragment {
                         Bundle bundle = new Bundle();
                         bundle.putString("USER_EMAIL", email);
 
-                        // TODO: Navigate to OTP Fragment
-                        Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_verifyOtpFragment, bundle);
+                        // Navigate to OTP Fragment
+                        NavOptions navOptions = new NavOptions.Builder()
+                                // Change to false so the login screen stays alive underneath the OTP screen
+                                .setPopUpTo(R.id.loginFragment, false)
+                                .build();
+
+                        Navigation.findNavController(requireView()).navigate(
+                                R.id.action_loginFragment_to_verifyOtpFragment,
+                                bundle,
+                                navOptions
+                        );
 
                     } else {
                         Toast.makeText(getContext(), "Login Failed: Invalid credentials", Toast.LENGTH_SHORT).show();

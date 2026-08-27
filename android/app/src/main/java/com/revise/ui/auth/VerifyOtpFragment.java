@@ -15,6 +15,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 
 import com.google.android.material.button.MaterialButton;
@@ -165,7 +166,17 @@ public class VerifyOtpFragment extends Fragment {
 
                     Toast.makeText(getContext(), "Email Verified Successfully!", Toast.LENGTH_SHORT).show();
 
-                    Navigation.findNavController(view).navigate(R.id.action_verifyOtpFragment_to_dashboardFragment);
+                    NavOptions navOptions = new NavOptions.Builder()
+                            // Change R.id.verifyOtpFragment to our nav graph's root start destination (e.g., loginFragment)
+                            // This acts as a nuke, clearing EVERYTHING in the backstack up to and including the login/signup screens.
+                            .setPopUpTo(R.id.loginFragment, true)
+                            .build();
+
+                    Navigation.findNavController(requireView()).navigate(
+                            R.id.action_verifyOtpFragment_to_dashboardFragment,
+                            null,
+                            navOptions
+                    );
                 } else {
                     if (response.code() == 400) {
                         Toast.makeText(getContext(), "Invalid or Expired OTP", Toast.LENGTH_SHORT).show();
