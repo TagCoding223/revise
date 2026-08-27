@@ -1,9 +1,9 @@
 package com.revise.repository;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
-
 import com.revise.database.AppDatabase;
 import com.revise.database.TopicDao;
 import com.revise.dto.request.TopicRequest;
@@ -11,13 +11,11 @@ import com.revise.dto.request.TopicSyncRequest;
 import com.revise.model.Topic;
 import com.revise.network.RetrofitClient;
 import com.revise.network.TopicApiService;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -28,6 +26,9 @@ public class TopicRepository {
     private final TopicApiService apiService;
     private final ExecutorService executorService;
     private final Handler mainThreadHandler;
+    private final SharedPreferences syncPrefs;
+    private static final String PREF_LAST_SYNC = "last_successful_sync";
+    private static final String DEFAULT_TIMESTAMP = "2000-01-01T00:00:00.000";
 
     public TopicRepository(Context context) {
         AppDatabase db = AppDatabase.getDatabase(context);
@@ -35,6 +36,7 @@ public class TopicRepository {
         this.apiService = RetrofitClient.getClient(context).create(TopicApiService.class);
         this.executorService = Executors.newSingleThreadExecutor();
         this.mainThreadHandler = new Handler(Looper.getMainLooper());
+        this.syncPrefs = context.getSharedPreferences("SyncPrefs", Context.MODE_PRIVATE);
     }
 
     public interface RepositoryCallback<T> {
@@ -43,63 +45,34 @@ public class TopicRepository {
     }
 
     // ==========================================
-    // 1. FETCH TOPICS & BACKGROUND SYNC
+    // 1. MASTER SYNC ORCHESTRATOR
     // ==========================================
     public void getTopics(RepositoryCallback<List<Topic>> callback) {
         executorService.execute(() -> {
-            // 1. Show local data immediately
+            // A. Show local data instantly for zero-latency UX
             List<Topic> localTopics = topicDao.getAllTopics();
             if (localTopics != null && !localTopics.isEmpty()) {
                 mainThreadHandler.post(() -> callback.onSuccess(localTopics));
             }
 
-            // 2. Fetch fresh server data
-            apiService.getAllTopics().enqueue(new Callback<List<Topic>>() {
-                @Override
-                public void onResponse(Call<List<Topic>> call, Response<List<Topic>> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        executorService.execute(() -> {
-                            // A: BACKUP offline changes before wiping!
-                            List<Topic> unsynced = topicDao.getUnsyncedTopics();
+            // B. Check for unsynced offline changes
+            List<Topic> unsynced = topicDao.getUnsyncedTopics();
 
-                            // B: Wipe and insert fresh server data
-                            List<Topic> remoteTopics = response.body();
-                            for (Topic t : remoteTopics) { t.setSynced(true); }
-                            topicDao.clearAll();
-                            topicDao.insertTopics(remoteTopics);
-
-                            // C: RESTORE offline changes so they are not lost
-                            if (unsynced != null && !unsynced.isEmpty()) {
-                                topicDao.insertTopics(unsynced);
-
-                                // D: Pass the UI callback here!
-                                pushOfflineData(unsynced, callback);
-                            }
-
-                            // E: Update the UI with the final merged list
-                            List<Topic> finalTopics = topicDao.getAllTopics();
-                            mainThreadHandler.post(() -> callback.onSuccess(finalTopics));
-                        });
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<List<Topic>> call, Throwable t) {
-                    if (localTopics == null || localTopics.isEmpty()) {
-                        mainThreadHandler.post(() -> callback.onError("Network offline."));
-                    }
-                }
-            });
+            if (unsynced != null && !unsynced.isEmpty()) {
+                // If offline changes exist, PUSH them first, then PULL deltas
+                pushOfflineData(unsynced, callback);
+            } else {
+                // If no offline changes, jump straight to PULLING deltas
+                pullDeltaSync(callback);
+            }
         });
     }
 
     // ==========================================
-    // HELPER: BATCH SYNC TO BACKEND
+    // 2. PUSH SYNC (Step 1 of Two-Way Sync)
     // ==========================================
-    // The callback parameter
     private void pushOfflineData(List<Topic> unsyncedTopics, RepositoryCallback<List<Topic>> callback) {
         List<TopicSyncRequest> batchPayload = new ArrayList<>();
-
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", java.util.Locale.US);
         String currentIsoDate = sdf.format(new java.util.Date());
 
@@ -111,46 +84,88 @@ public class TopicRepository {
                 });
             } else {
                 batchPayload.add(new TopicSyncRequest(
-                        t.getId(),
-                        t.getTitle(),
-                        t.getDescription(),
-                        t.getLinks(),
-                        t.getStage(),
+                        t.getId(), t.getTitle(), t.getDescription(), t.getLinks(), t.getStage(),
                         t.getLastRevisionDate() != null ? t.getLastRevisionDate() : currentIsoDate,
                         t.getNextRevisionDate() != null ? t.getNextRevisionDate() : currentIsoDate,
-                        currentIsoDate // Last Write Wins Conflict Date
+                        currentIsoDate
                 ));
             }
         }
 
-        if (batchPayload.isEmpty()) return;
+        if (batchPayload.isEmpty()) {
+            pullDeltaSync(callback);
+            return;
+        }
 
         apiService.pushSyncBatch(batchPayload).enqueue(new Callback<com.revise.dto.response.ApiResponse>() {
             @Override
             public void onResponse(Call<com.revise.dto.response.ApiResponse> call, Response<com.revise.dto.response.ApiResponse> response) {
                 if (response.isSuccessful()) {
                     executorService.execute(() -> {
+                        // Mark as synced locally
                         for (Topic t : unsyncedTopics) {
                             if (!t.isDeleted()) {
-                                t.setSynced(true); // Database updated
+                                t.setSynced(true);
                                 topicDao.insertTopic(t);
                             }
                         }
-
-                        // Re-fetch the clean list from the database and refresh the UI!
-                        List<Topic> updatedTopics = topicDao.getAllTopics();
-                        mainThreadHandler.post(() -> callback.onSuccess(updatedTopics));
+                        // Move to Phase 2: Pull Deltas
+                        pullDeltaSync(callback);
                     });
+                } else {
+                    // Push failed, but we should still try to pull updates
+                    pullDeltaSync(callback);
                 }
             }
-
             @Override
-            public void onFailure(Call<com.revise.dto.response.ApiResponse> call, Throwable t) {}
+            public void onFailure(Call<com.revise.dto.response.ApiResponse> call, Throwable t) {
+                pullDeltaSync(callback);
+            }
         });
     }
 
     // ==========================================
-    // 2. CREATE TOPIC
+    // 3. PULL SYNC (Step 2 of Two-Way Sync)
+    // ==========================================
+    private void pullDeltaSync(RepositoryCallback<List<Topic>> callback) {
+        String lastSyncTime = syncPrefs.getString(PREF_LAST_SYNC, DEFAULT_TIMESTAMP);
+
+        apiService.pullSync(lastSyncTime).enqueue(new Callback<List<Topic>>() {
+            @Override
+            public void onResponse(Call<List<Topic>> call, Response<List<Topic>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    executorService.execute(() -> {
+                        List<Topic> deltaTopics = response.body();
+
+                        if (!deltaTopics.isEmpty()) {
+                            // Room's OnConflictStrategy.REPLACE automatically handles updates vs new inserts!
+                            for (Topic t : deltaTopics) { t.setSynced(true); }
+                            topicDao.insertTopics(deltaTopics);
+                        }
+
+                        // Record the exact moment this sync finished
+                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", java.util.Locale.US);
+                        syncPrefs.edit().putString(PREF_LAST_SYNC, sdf.format(new java.util.Date())).apply();
+
+                        // Refresh UI with the finalized database state
+                        List<Topic> finalTopics = topicDao.getAllTopics();
+                        mainThreadHandler.post(() -> callback.onSuccess(finalTopics));
+                    });
+                } else {
+                    mainThreadHandler.post(() -> callback.onError("Failed to fetch recent updates."));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Topic>> call, Throwable t) {
+                // Fails silently if offline; the user is already viewing the cached data.
+                mainThreadHandler.post(() -> callback.onError("Network offline. Displaying local data."));
+            }
+        });
+    }
+
+    // ==========================================
+    // 4. CREATE TOPIC
     // ==========================================
     public void createTopic(TopicRequest request, RepositoryCallback<Topic> callback) {
         executorService.execute(() -> {
@@ -176,7 +191,7 @@ public class TopicRepository {
     }
 
     // ==========================================
-    // 3. UPDATE TOPIC (Now Fully Optimistic)
+    // 5. UPDATE TOPIC (Now Fully Optimistic)
     // ==========================================
     // Note: We changed 'String topicId' to 'Topic existingTopic'
     public void updateTopic(Topic existingTopic, TopicRequest request, RepositoryCallback<Topic> callback) {
@@ -209,7 +224,7 @@ public class TopicRepository {
     }
 
     // ==========================================
-    // 4. DELETE TOPIC
+    // 6. DELETE TOPIC
     // ==========================================
     public void deleteTopic(String topicId, RepositoryCallback<Void> callback) {
         executorService.execute(() -> {
@@ -228,7 +243,7 @@ public class TopicRepository {
     }
 
     // ==========================================
-    // 5. REVISE TOPIC (Fully Optimistic)
+    // 7. REVISE TOPIC (Fully Optimistic)
     // ==========================================
     public void reviseTopic(Topic existingTopic, RepositoryCallback<Topic> callback) {
         executorService.execute(() -> {
