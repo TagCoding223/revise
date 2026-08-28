@@ -258,6 +258,14 @@ public class DashboardFragment extends Fragment {
 
     // For Notification
     private void scheduleDailyReminder() {
+        // FOR TESTING: Force a One-Time Test in Code
+        // we want to trigger it instantly every time we open the app for testing purposes
+//        {
+//            androidx.work.OneTimeWorkRequest testRequest =
+//                    new androidx.work.OneTimeWorkRequest.Builder(com.revise.workers.RevisionNotificationWorker.class).build();
+//            androidx.work.WorkManager.getInstance(requireContext()).enqueue(testRequest);
+//        }
+
         androidx.work.PeriodicWorkRequest revisionWorkRequest =
                 new androidx.work.PeriodicWorkRequest.Builder(
                         com.revise.workers.RevisionNotificationWorker.class,
