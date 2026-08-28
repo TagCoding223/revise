@@ -55,7 +55,8 @@ public class MainActivity extends AppCompatActivity {
 
             // 3. Check for existing session
             TokenManager tokenManager = new TokenManager(this);
-            if (tokenManager.getRefreshToken() != null) {
+            String token = tokenManager.getAccessToken();
+            if (token != null && !token.isEmpty()) {
                 // User is logged in -> Go straight to Dashboard
                 navGraph.setStartDestination(R.id.dashboardFragment);
             } else {

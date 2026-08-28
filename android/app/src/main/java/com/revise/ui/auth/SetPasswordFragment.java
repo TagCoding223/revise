@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.revise.R;
+import com.revise.network.TokenManager;
 
 public class SetPasswordFragment extends Fragment {
 
@@ -29,6 +30,13 @@ public class SetPasswordFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        TokenManager tokenManager = new TokenManager(requireContext());
+        if (tokenManager.getAccessToken() == null || tokenManager.getAccessToken().isEmpty()) {
+            // Eject them instantly if they somehow got here without a token
+            Navigation.findNavController(view).navigate(R.id.loginFragment);
+            return;
+        }
 
         ImageButton btnBack = view.findViewById(R.id.btnBack);
         TextInputEditText etNewPassword = view.findViewById(R.id.etNewPassword);

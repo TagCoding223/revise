@@ -51,6 +51,14 @@ public class DashboardFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        TokenManager tokenManager = new TokenManager(requireContext());
+        if (tokenManager.getAccessToken() == null || tokenManager.getAccessToken().isEmpty()) {
+            // Eject them instantly if they somehow got here without a token
+            Navigation.findNavController(view).navigate(R.id.loginFragment);
+            return;
+        }
+
         checkNotificationPermission();
 
         // Initialize the Repository

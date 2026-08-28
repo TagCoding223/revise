@@ -20,6 +20,7 @@ import com.revise.R;
 import com.revise.dto.response.ProfileResponse;
 import com.revise.network.AuthApiService;
 import com.revise.network.RetrofitClient;
+import com.revise.network.TokenManager;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -42,6 +43,13 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        TokenManager tokenManager = new TokenManager(requireContext());
+        if (tokenManager.getAccessToken() == null || tokenManager.getAccessToken().isEmpty()) {
+            // Eject them instantly if they somehow got here without a token
+            Navigation.findNavController(view).navigate(R.id.loginFragment);
+            return;
+        }
 
         // 1. Initialize UI Elements
         tvProfileName = view.findViewById(R.id.tvProfileName);
