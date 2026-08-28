@@ -10,4 +10,9 @@ public class ReviseApplication {
 		SpringApplication.run(ReviseApplication.class, args);
 	}
 
+	// Forces the entire backend to run in UTC
+    @PostConstruct
+    public void init() {
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+    }
 }
