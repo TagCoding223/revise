@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 @Entity(tableName = "topics")
@@ -58,6 +60,8 @@ public class Topic {
 
     // Sync tracking fields
     private boolean isSynced = true;
+
+    @SerializedName("deleted") // Tells Retrofit to look for the "deleted" key in the JSON
     private boolean isDeleted = false;
 
     // Getters and Setters

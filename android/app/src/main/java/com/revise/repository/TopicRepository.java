@@ -73,6 +73,7 @@ public class TopicRepository {
     private void pushOfflineData(List<Topic> unsyncedTopics, RepositoryCallback<List<Topic>> callback) {
         List<TopicSyncRequest> batchPayload = new ArrayList<>();
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", java.util.Locale.US);
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
         String currentIsoDate = sdf.format(new java.util.Date());
 
         for (Topic t : unsyncedTopics) {
@@ -143,6 +144,7 @@ public class TopicRepository {
                         }
 
                         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", java.util.Locale.US);
+                        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
                         syncPrefs.edit().putString(PREF_LAST_SYNC, sdf.format(new java.util.Date())).apply();
 
                         List<Topic> finalTopics = topicDao.getAllTopics();
