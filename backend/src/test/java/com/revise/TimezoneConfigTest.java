@@ -1,5 +1,6 @@
 package com.revise;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import java.time.ZoneId;
 import java.util.TimeZone;
@@ -7,12 +8,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TimezoneConfigTest {
 
-    @Test
-    void testTimezoneIsLockedToUTC() throws ClassNotFoundException {
-        // Trigger the static block in your main class to load
+    @BeforeAll
+    static void setup() throws ClassNotFoundException {
+        // Trigger the static block in your main class to load once for all tests
         Class.forName("com.revise.ReviseApplication"); 
+    }
 
+    @Test
+    void testTimezoneIsLockedToUTC() {
+        // Act
         String defaultTimezone = TimeZone.getDefault().getID();
+        
+        // Assert
         assertEquals("UTC", defaultTimezone, 
             "CRITICAL: The application default timezone must be locked to UTC.");
     }
