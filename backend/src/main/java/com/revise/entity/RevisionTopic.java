@@ -60,7 +60,7 @@ public class RevisionTopic {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
+    // @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 

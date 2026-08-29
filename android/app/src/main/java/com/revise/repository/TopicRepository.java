@@ -13,6 +13,7 @@ import com.revise.network.RetrofitClient;
 import com.revise.network.TopicApiService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import retrofit2.Call;
@@ -72,17 +73,15 @@ public class TopicRepository {
     // ==========================================
     private void pushOfflineData(List<Topic> unsyncedTopics, RepositoryCallback<List<Topic>> callback) {
         List<TopicSyncRequest> batchPayload = new ArrayList<>();
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", java.util.Locale.US);
-        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
-        String currentIsoDate = sdf.format(new java.util.Date());
 
         for (Topic t : unsyncedTopics) {
             batchPayload.add(new TopicSyncRequest(
                     t.getId(), t.getTitle(), t.getDescription(), t.getLinks(), t.getStage(),
-                    t.getLastRevisionDate() != null ? t.getLastRevisionDate() : currentIsoDate,
-                    t.getNextRevisionDate() != null ? t.getNextRevisionDate() : currentIsoDate,
-                    currentIsoDate,
-                    t.isDeleted() // Pass the soft-delete flag to Spring Boot
+                    // Use the stored timestamp, fallback to current UTC if null
+                    t.getLastRevisionDate() != null ? t.getLastRevisionDate() : getCurrentUtcTime(),
+                    t.getNextRevisionDate() != null ? t.getNextRevisionDate() : getCurrentUtcTime(),
+                    t.getUpdatedAt() != null ? t.getUpdatedAt() : getCurrentUtcTime(), // LWW Anchor
+                    t.isDeleted()
             ));
         }
 
@@ -175,6 +174,7 @@ public class TopicRepository {
             localTopic.setCategory("today");
             localTopic.setStage(1);
             localTopic.setSynced(false);
+            localTopic.setUpdatedAt(getCurrentUtcTime());
 
             topicDao.insertTopic(localTopic);
 
@@ -188,35 +188,24 @@ public class TopicRepository {
     }
 
     // ==========================================
-    // 5. UPDATE TOPIC (Now Fully Optimistic)
+    // 5. UPDATE TOPIC (True Offline-First)
     // ==========================================
-    // Note: We changed 'String topicId' to 'Topic existingTopic'
     public void updateTopic(Topic existingTopic, TopicRequest request, RepositoryCallback<Topic> callback) {
         executorService.execute(() -> {
-            // 1. Optimistic Local Save FIRST
+            // 1. Optimistic Local Save ONLY
             existingTopic.setTitle(request.getTitle());
             existingTopic.setDescription(request.getDescription());
             existingTopic.setLinks(request.getLinks());
             existingTopic.setSynced(false);
+            existingTopic.setUpdatedAt(getCurrentUtcTime());
 
             topicDao.insertTopic(existingTopic);
+
+            // 2. Trigger UI update. DashboardFragment will call fetchTopics(),
+            // which handles the background batch sync safely without race conditions!
             mainThreadHandler.post(() -> callback.onSuccess(existingTopic));
 
-            // 2. Background Network Sync
-            apiService.updateTopic(existingTopic.getId(), request).enqueue(new Callback<Topic>() {
-                @Override
-                public void onResponse(Call<Topic> call, Response<Topic> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        executorService.execute(() -> {
-                            Topic updatedTopic = response.body();
-                            updatedTopic.setSynced(true);
-                            topicDao.insertTopic(updatedTopic);
-                        });
-                    }
-                }
-                @Override
-                public void onFailure(Call<Topic> call, Throwable t) {} // Fails silently, stays offline
-            });
+            // NOTE: apiService.updateTopic(...) has been removed!
         });
     }
 
@@ -231,6 +220,7 @@ public class TopicRepository {
                 if (t.getId().equals(topicId)) {
                     t.setDeleted(true);
                     t.setSynced(false);
+                    t.setUpdatedAt(getCurrentUtcTime()); // Stamp the deletion time
                     topicDao.insertTopic(t);
                     break;
                 }
@@ -242,50 +232,34 @@ public class TopicRepository {
     }
 
     // ==========================================
-    // 7. REVISE TOPIC (Fully Optimistic)
+    // 7. REVISE TOPIC (True Offline-First)
     // ==========================================
     public void reviseTopic(Topic existingTopic, RepositoryCallback<Topic> callback) {
         executorService.execute(() -> {
             // 1. Optimistic Local Update
             int newStage = existingTopic.getStage() + 1;
             existingTopic.setStage(newStage);
-
-            // Apply Spaced Repetition Logic
             int daysToAdd = calculateSpaceRepetitionInterval(newStage);
 
-            // Format dates accurately for Spring Boot
+            // 2. Format dates accurately for Spring Boot
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", java.util.Locale.US);
-            java.util.Calendar calendar = java.util.Calendar.getInstance();
+            sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC")); // CRITICAL FIX: Forces UTC!
 
-            existingTopic.setLastRevisionDate(sdf.format(calendar.getTime())); // Revised right now
+            java.util.Calendar calendar = java.util.Calendar.getInstance();
+            existingTopic.setLastRevisionDate(sdf.format(calendar.getTime()));
 
             calendar.add(java.util.Calendar.DAY_OF_YEAR, daysToAdd);
-            existingTopic.setNextRevisionDate(sdf.format(calendar.getTime())); // Next due date
+            existingTopic.setNextRevisionDate(sdf.format(calendar.getTime()));
 
-            // Dynamically update UI category so it disappears from the "Today" list instantly
+            // 3. Dynamically update UI category
             existingTopic.setCategory(daysToAdd == 1 ? "tomorrow" : "other");
             existingTopic.setSynced(false);
+            existingTopic.setUpdatedAt(getCurrentUtcTime());
 
             topicDao.insertTopic(existingTopic);
             mainThreadHandler.post(() -> callback.onSuccess(existingTopic));
 
-            // 2. Background Network Sync
-            apiService.reviseTopic(existingTopic.getId()).enqueue(new Callback<Topic>() {
-                @Override
-                public void onResponse(Call<Topic> call, Response<Topic> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        executorService.execute(() -> {
-                            Topic serverTopic = response.body();
-                            serverTopic.setSynced(true);
-                            topicDao.insertTopic(serverTopic);
-                        });
-                    }
-                }
-                @Override
-                public void onFailure(Call<Topic> call, Throwable t) {
-                    // Fails silently. It remains isSynced=false and will ride the batch sync later!
-                }
-            });
+            // NOTE: apiService.reviseTopic(...) has been removed!
         });
     }
 
@@ -301,5 +275,11 @@ public class TopicRepository {
             case 8: return 365;
             default: return 730;
         }
+    }
+
+    private String getCurrentUtcTime() {
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US);
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        return sdf.format(new java.util.Date());
     }
 }

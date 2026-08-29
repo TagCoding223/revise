@@ -14,6 +14,7 @@ public class TopicResponse {
     private LocalDateTime lastRevisionDate;
     private LocalDateTime nextRevisionDate;
     private boolean deleted;
+    private LocalDateTime updatedAt;
 
     // We will calculate this dynamically in the service layer to make frontend filtering easier
     private String category;

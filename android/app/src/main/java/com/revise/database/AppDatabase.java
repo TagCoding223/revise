@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 import com.revise.model.Topic;
 
-@Database(entities = {Topic.class}, version = 3, exportSchema = false)
+@Database(entities = {Topic.class}, version = 4, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 

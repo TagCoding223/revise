@@ -2,8 +2,10 @@ package com.revise.service.impl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -20,6 +22,9 @@ import com.revise.repository.TopicRepository;
 import com.revise.repository.UserRepository;
 import com.revise.service.TopicService;
 import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import lombok.RequiredArgsConstructor;
 
@@ -47,6 +52,7 @@ public class TopicServiceImpl implements TopicService {
         topic.setStage(1);
         topic.setLastRevisionDate(null);
         topic.setNextRevisionDate(LocalDateTime.now()); // Due immediately today
+        topic.setUpdatedAt(LocalDateTime.now());
 
         RevisionTopic savedTopic = topicRepository.save(topic);
         return mapToResponse(savedTopic);
@@ -60,6 +66,7 @@ public class TopicServiceImpl implements TopicService {
         topic.setTitle(request.getTitle());
         topic.setDescription(request.getDescription());
         topic.setLinks(request.getLinks());
+        topic.setUpdatedAt(LocalDateTime.now());
 
         RevisionTopic updatedTopic = topicRepository.save(topic);
         return mapToResponse(updatedTopic);
@@ -85,6 +92,7 @@ public class TopicServiceImpl implements TopicService {
         RevisionTopic topic = getTopicEntityOwnedByUser(topicId, userId);
         topic.setDeleted(true); // Soft delete
         topicRepository.save(topic);
+        topic.setUpdatedAt(LocalDateTime.now());
         return new ApiResponse(true, "Topic deleted successfully.");
     }
 
@@ -102,6 +110,7 @@ public class TopicServiceImpl implements TopicService {
         // Calculate the next revision date based on the new stage
         int daysToAdd = calculateSpaceRepetitionInterval(topic.getStage());
         topic.setNextRevisionDate(LocalDateTime.now().plusDays(daysToAdd));
+        topic.setUpdatedAt(LocalDateTime.now());
 
         RevisionTopic updatedTopic = topicRepository.save(topic);
         return mapToResponse(updatedTopic);
@@ -114,7 +123,8 @@ public class TopicServiceImpl implements TopicService {
         LocalDateTime endOfToday = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
 
         // 2. Let the Database do the heavy lifting!
-        // Only loads ACTIVE topics that belong to the user AND are due today or earlier.
+        // Only loads ACTIVE topics that belong to the user AND are due today or
+        // earlier.
         List<RevisionTopic> topicsToRevise = topicRepository
                 .findAllByUserIdAndNextRevisionDateLessThanEqualAndIsDeletedFalse(userId, endOfToday);
 
@@ -128,6 +138,7 @@ public class TopicServiceImpl implements TopicService {
             topic.setLastRevisionDate(LocalDateTime.now());
             int daysToAdd = calculateSpaceRepetitionInterval(topic.getStage());
             topic.setNextRevisionDate(LocalDateTime.now().plusDays(daysToAdd));
+            topic.setUpdatedAt(LocalDateTime.now());
         }
 
         // 4. Save back to the DB
@@ -188,6 +199,7 @@ public class TopicServiceImpl implements TopicService {
         response.setLastRevisionDate(topic.getLastRevisionDate());
         response.setNextRevisionDate(topic.getNextRevisionDate());
         response.setDeleted(topic.isDeleted());
+        response.setUpdatedAt(topic.getUpdatedAt());
 
         // Determine Category for the Dashboard UI
         LocalDate today = LocalDate.now();
@@ -215,6 +227,8 @@ public class TopicServiceImpl implements TopicService {
                 .collect(Collectors.toList());
     }
 
+    private static final Logger logger = LoggerFactory.getLogger(TopicServiceImpl.class);
+
     @Override
     @Transactional
     public ApiResponse pushSync(String userId, List<TopicSyncRequest> offlineTopics) {
@@ -235,7 +249,12 @@ public class TopicServiceImpl implements TopicService {
                 if (!existing.getUser().getId().equals(userId)) {
                     continue;
                 }
-
+                logger.info(dto.getUpdatedAt() + " : " + existing.getUpdatedAt());
+                String defaultZoneId = ZoneId.systemDefault().getId();
+                logger.info(defaultZoneId);
+                String defaultTimezone = TimeZone.getDefault().getID();
+                logger.info(defaultTimezone);
+                
                 // Conflict Resolution: Last Write Wins (LWW)
                 // If the server's record is newer than the mobile app's record, we ignore the
                 // mobile update.
@@ -258,6 +277,9 @@ public class TopicServiceImpl implements TopicService {
                     existing.setDeleted(true);
                 }
 
+                // Explicitly accept the Android app's edit time!
+                existing.setUpdatedAt(dto.getUpdatedAt() != null ? dto.getUpdatedAt() : LocalDateTime.now());
+
                 topicRepository.save(existing);
                 updatedCount++;
 
@@ -273,6 +295,9 @@ public class TopicServiceImpl implements TopicService {
                 newTopic.setStage(dto.getStage());
                 newTopic.setLastRevisionDate(dto.getLastRevisionDate());
                 newTopic.setNextRevisionDate(dto.getNextRevisionDate());
+
+                // Accept the Android app's creation time!
+                newTopic.setUpdatedAt(dto.getUpdatedAt() != null ? dto.getUpdatedAt() : LocalDateTime.now());
 
                 topicRepository.save(newTopic);
                 createdCount++;

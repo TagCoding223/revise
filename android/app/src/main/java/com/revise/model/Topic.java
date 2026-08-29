@@ -21,6 +21,7 @@ public class Topic {
     private String lastRevisionDate;
     private String nextRevisionDate;
     private List<String> links;
+    private String updatedAt;
 
     public Topic() {
     }
@@ -76,4 +77,7 @@ public class Topic {
 
     public void setLastRevisionDate(String lastRevisionDate) { this.lastRevisionDate = lastRevisionDate; }
     public void setNextRevisionDate(String nextRevisionDate) { this.nextRevisionDate = nextRevisionDate; }
+
+    public String getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
 }
