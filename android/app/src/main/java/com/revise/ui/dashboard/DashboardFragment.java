@@ -34,6 +34,7 @@ import com.revise.ui.dashboard.dialogs.TopicViewDialog;
 import java.util.ArrayList;
 import java.util.List;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 public class DashboardFragment extends Fragment {
 
     private RecyclerView rvToday, rvTomorrow, rvUpcoming;
@@ -233,12 +234,26 @@ public class DashboardFragment extends Fragment {
     }
 
     private void executeLogout() {
-        new TokenManager(requireContext()).clearTokens();
-        requireContext().getSharedPreferences("ProfileCache", Context.MODE_PRIVATE).edit().clear().apply();
+        repository.clearAllData(new TopicRepository.RepositoryCallback<Void>() {
+            @Override
+            public void onSuccess(Void data) {
+                // Data is securely wiped.
+                // Now navigate the user back to the LoginActivity
+                new TokenManager(requireContext()).clearTokens();
+                requireContext().getSharedPreferences("ProfileCache", Context.MODE_PRIVATE).edit().clear().apply();
 
-        Intent intent = new Intent(requireActivity(), MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
+                Intent intent = new Intent(requireActivity(), MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(getContext(),"Logout Failed, please try again after sometime. Due To: "+message,Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
     }
 
     // ==========================================

@@ -32,4 +32,7 @@ public interface TopicDao {
 
     @Query("DELETE FROM topics")
     void clearAll();
+
+    @Query("DELETE FROM topics")
+    void clearAllTopics();
 }

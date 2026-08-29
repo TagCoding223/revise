@@ -263,6 +263,21 @@ public class TopicRepository {
         });
     }
 
+    // ==========================================
+    // 8. LOGOUT / CLEAR DATA
+    // ==========================================
+    public void clearAllData(RepositoryCallback<Void> callback) {
+        executorService.execute(() -> {
+            // 1. Wipe the Room Database
+            topicDao.clearAllTopics();
+
+            // 2. Wipe the Sync Preferences (CRITICAL)
+            syncPrefs.edit().clear().apply();
+
+            mainThreadHandler.post(() -> callback.onSuccess(null));
+        });
+    }
+
     private int calculateSpaceRepetitionInterval(int stage) {
         switch (stage) {
             case 1: return 1;
