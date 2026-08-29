@@ -2,11 +2,13 @@ package com.revise;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.time.ZoneId;
 import java.util.TimeZone;
 
 @SpringBootApplication
+@EnableScheduling
 public class ReviseApplication {
 
     // 1. CRITICAL FIX: The static block executes immediately upon class load.

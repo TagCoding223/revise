@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.revise.entity.RevisionTopic;
 
@@ -26,4 +29,7 @@ public interface TopicRepository extends JpaRepository<RevisionTopic, String>{
     // Revise All Today: Only fetch active topics
     List<RevisionTopic> findAllByUserIdAndNextRevisionDateLessThanEqualAndIsDeletedFalse(String userId, LocalDateTime date);
 
+    @Modifying
+    @Query("DELETE FROM RevisionTopic t WHERE t.isDeleted = true AND t.updatedAt <= :thresholdDate")
+    int permanentlyDeleteOldTombstones(@Param("thresholdDate") LocalDateTime thresholdDate);
 }
