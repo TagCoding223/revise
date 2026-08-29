@@ -5,12 +5,12 @@ export default function DownloadApp() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
-  // APK file details (place 'revise-app.apk' in your React/Vite 'public/' folder)
-  const APK_DOWNLOAD_URL = '/revise-app.apk';
-  const APP_VERSION = 'v1.0.0';
-  const APK_SIZE = '8.4 MB';
-  const MIN_ANDROID = 'Android 8.0 (API 26)+';
-  const SHA256_CHECKSUM = '7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069';
+  // APK file details (place 'revise.apk' in our React/Vite 'public/' folder)
+  const APK_DOWNLOAD_URL = import.meta.env.VITE_APK_DOWNLOAD_URL || '';
+  const APP_VERSION = import.meta.env.VITE_APP_VERSION || '';
+  const APK_SIZE = import.meta.env.VITE_APK_SIZE || '';
+  const MIN_ANDROID = import.meta.env.VITE_MIN_ANDROID || '';
+  const SHA256_CHECKSUM = import.meta.env.VITE_SHA256_CHECKSUM || '';
 
   const handleCopyHash = () => {
     navigator.clipboard.writeText(SHA256_CHECKSUM);
