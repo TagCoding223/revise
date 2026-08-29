@@ -2,6 +2,7 @@ package com.revise.model;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 import com.google.gson.annotations.SerializedName;
@@ -23,9 +24,11 @@ public class Topic {
     private List<String> links;
     private String updatedAt;
 
+    // Room will use this default constructor automatically
     public Topic() {
     }
 
+    @Ignore
     public Topic(String id, String title, String description, int stage, String category) {
         this.id = id;
         this.title = title;
