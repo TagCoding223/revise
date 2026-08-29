@@ -4,7 +4,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import java.time.ZoneId;
 import java.util.TimeZone;
 
 @SpringBootApplication
@@ -21,10 +20,6 @@ public class ReviseApplication {
 	public static void main(String[] args) {
         // CRITICAL FIX: Lock the timezone before Spring Boot initializes its components!
         // TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-        String defaultZoneId = ZoneId.systemDefault().getId();
-        System.out.println(defaultZoneId);
-        String defaultTimezone = TimeZone.getDefault().getID();
-        System.out.println(defaultTimezone);
 		SpringApplication.run(ReviseApplication.class, args);
 	}
 }
