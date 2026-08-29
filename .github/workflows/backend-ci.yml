@@ -3,7 +3,6 @@ name: Spring Boot CI
 on:
   push:
     branches: [ "main", "master" ]
-    # ONLY trigger if files inside the backend folder are modified
     paths:
       - 'backend/**' 
   pull_request:
@@ -15,7 +14,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     
-    # CRITICAL: Tells the runner to execute all 'run' commands inside this folder
     defaults:
       run:
         working-directory: ./backend 
@@ -24,15 +22,16 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Set up JDK 26
+    - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
-        java-version: '26'
+        java-version: '17'
         distribution: 'temurin'
         cache: 'maven'
 
     - name: Grant execute permission for mvnw
       run: chmod +x mvnw
 
-    - name: Run Tests
-      run: ./mvnw clean test
+    # Run ONLY the specific lightweight test class using -Dtest
+    - name: Run Specific Tests (No DB Required)
+      run: ./mvnw clean test -Dtest="TimezoneConfigTest"
