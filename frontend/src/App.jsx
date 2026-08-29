@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './routes/ProtectedRoute';
 import PublicRoute from './routes/PublicRoute';
 import TopLoadingBar from './components/shared/TopLoadingBar';
+import DownloadApp from './pages/DownloadApp';
 
 // 1. Dynamically import pages using React.lazy
 const Landing = lazy(() => import('./pages/Landing'));
@@ -59,6 +60,15 @@ export default function App() {
               element={
                 <PublicRoute>
                   <OtpVerify />
+                </PublicRoute>
+              }
+            />
+
+            <Route
+              path="/download"
+              element={
+                <PublicRoute>
+                  <DownloadApp />
                 </PublicRoute>
               }
             />
