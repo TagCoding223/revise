@@ -18,13 +18,6 @@ public interface TopicRepository extends JpaRepository<RevisionTopic, String>{
     // Highly optimized DB query
     // This translates to: SELECT * FROM topics WHERE user_id = ? AND next_revision_date <= ?
     List<RevisionTopic> findAllByUserIdAndNextRevisionDateLessThanEqual(String userId, LocalDateTime date);
-
-    // Pull Sync Query for Android: Fetch EVERYTHING updated recently, including deleted ones!
-    // Translates to: SELECT * FROM topics WHERE user_id = ? AND updated_at >= ?
-    List<RevisionTopic> findByUserIdAndUpdatedAtGreaterThanEqual(String userId, LocalDateTime since);
-
-    // Web Dashboard: Only fetch active topics
-    List<RevisionTopic> findAllByUserIdAndIsDeletedFalse(String userId);
     
     // Revise All Today: Only fetch active topics
     List<RevisionTopic> findAllByUserIdAndNextRevisionDateLessThanEqualAndIsDeletedFalse(String userId, LocalDateTime date);
@@ -32,4 +25,21 @@ public interface TopicRepository extends JpaRepository<RevisionTopic, String>{
     @Modifying
     @Query("DELETE FROM RevisionTopic t WHERE t.isDeleted = true AND t.updatedAt <= :thresholdDate")
     int permanentlyDeleteOldTombstones(@Param("thresholdDate") LocalDateTime thresholdDate);
+
+    // fix for the Web Dashboard fetch
+    @Query("SELECT DISTINCT t FROM RevisionTopic t LEFT JOIN FETCH t.links WHERE t.user.id = :userId AND t.isDeleted = false")
+    List<RevisionTopic> findAllByUserIdAndIsDeletedFalse(@Param("userId") String userId);
+    
+    // fix for the Pull Sync fetch
+    @Query("SELECT DISTINCT t FROM RevisionTopic t LEFT JOIN FETCH t.links WHERE t.user.id = :userId AND t.updatedAt >= :since")
+    List<RevisionTopic> findByUserIdAndUpdatedAtGreaterThanEqual(@Param("userId") String userId, @Param("since") LocalDateTime since);
+
+
+    // below query is responsible for The N+1 Query Problem
+    // Pull Sync Query for Android: Fetch EVERYTHING updated recently, including deleted ones!
+    // Translates to: SELECT * FROM topics WHERE user_id = ? AND updated_at >= ?
+    // List<RevisionTopic> findByUserIdAndUpdatedAtGreaterThanEqual(String userId, LocalDateTime since);
+
+    // Web Dashboard: Only fetch active topics
+    // List<RevisionTopic> findAllByUserIdAndIsDeletedFalse(String userId);
 }
