@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
 export default function Legal() {
   const { hash } = useLocation();
@@ -22,7 +23,10 @@ export default function Legal() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8 animate-in fade-in duration-300">
-      
+      <Helmet>
+        <title>Legal, Privacy & Terms | Revise</title>
+        <meta name="description" content="Read the Revise Terms of Service, Privacy Policy, and learn more about our mission to help you retain information permanently." />
+      </Helmet>
       {/* Page Header */}
       <div className="text-center mb-16">
         <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-4">
@@ -31,7 +35,7 @@ export default function Legal() {
         <p className="text-lg text-gray-600 dark:text-gray-400">
           Everything you need to know about our mission, your privacy, and our terms of service.
         </p>
-        
+
         {/* Quick Jump Links */}
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Link to="#about" className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-gray-700 dark:hover:text-blue-400 transition-colors cursor-pointer">
@@ -47,7 +51,7 @@ export default function Legal() {
       </div>
 
       <div className="space-y-20">
-        
+
         {/* --- ABOUT SECTION --- */}
         <section id="about" className="scroll-mt-24">
           <div className="border-b border-gray-200 dark:border-gray-800 pb-4 mb-8">
@@ -91,7 +95,7 @@ export default function Legal() {
               <li><strong>Account Information:</strong> When you sign up via Email or Google Auth, we collect your name, email address, and authentication tokens.</li>
               <li><strong>Study Data:</strong> The topics you create, links you save, and the timestamps of your revisions are stored to power the spaced repetition algorithm.</li>
             </ul>
-            
+
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">2. How We Use Your Data</h3>
             <p>
               We use the collected information exclusively to provide and maintain the Service. Specifically, your study data is used to calculate and schedule your daily revision dashboard. We <strong>do not</strong> sell your data to third-party advertisers.
@@ -99,7 +103,7 @@ export default function Legal() {
 
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">3. Data Security</h3>
             <p>
-              We implement industry-standard security measures, including JSON Web Tokens (JWT) for session management and BCrypt password hashing, to protect against unauthorized access or data breaches. 
+              We implement industry-standard security measures, including JSON Web Tokens (JWT) for session management and BCrypt password hashing, to protect against unauthorized access or data breaches.
             </p>
           </div>
         </section>

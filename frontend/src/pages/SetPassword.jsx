@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import api from '../api/axiosConfig';
 import { useAlert } from '../context/AlertContext';
+import { Helmet } from 'react-helmet-async';
 
 // --- Zod Validation Schema ---
 const setPasswordSchema = z.object({
@@ -13,7 +14,7 @@ const setPasswordSchema = z.object({
     .regex(/[a-z]/, { message: "Must contain at least one lowercase letter" })
     .regex(/[A-Z]/, { message: "Must contain at least one uppercase letter" })
     .regex(/[0-9]/, { message: "Must contain at least one number" })
-    .regex(/[^A-Za-z0-9]/, { message: "Password must contain at least one symbol"}),
+    .regex(/[^A-Za-z0-9]/, { message: "Password must contain at least one symbol" }),
   confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
@@ -25,7 +26,7 @@ const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '';
 export default function SetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingData, setPendingData] = useState(null);
@@ -52,8 +53,8 @@ export default function SetPassword() {
     setIsSubmitting(true);
     setIsModalOpen(false); // Close the modal immediately
     try {
-      await api.post(`${BACKEND_BASE_URL}/api/v1/users/set-password`, { 
-        password: pendingData.password 
+      await api.post(`${BACKEND_BASE_URL}/api/v1/users/set-password`, {
+        password: pendingData.password
       });
 
       showAlert("Password set successfully! Welcome to your dashboard.", "success", 5000);
@@ -73,10 +74,14 @@ export default function SetPassword() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] animate-in fade-in duration-300">
-      
+      <Helmet>
+        <title>Secure Your Account | Revise</title>
+        <meta name="description" content="Secure your Revise account by setting a new strong password." />
+      </Helmet>
+
       {/* Container to align back button and card */}
       <div className="w-full max-w-md">
-        
+
         {/* Back to Dashboard Button */}
         <button
           onClick={() => navigate('/dashboard')}
@@ -99,7 +104,7 @@ export default function SetPassword() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            
+
             {/* Password Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -174,7 +179,7 @@ export default function SetPassword() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-200">
             <div className="p-6">
-              
+
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 mb-4">
                 <svg className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />

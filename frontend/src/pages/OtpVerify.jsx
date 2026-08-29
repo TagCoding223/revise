@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import { useAlert } from '../context/AlertContext';
 import { useAuth } from '../context/AuthContext';
+import { Helmet } from 'react-helmet-async';
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '';
 
@@ -10,14 +11,14 @@ export default function OtpVerify() {
   const [otp, setOtp] = useState(['', '', '', '']);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  
+
   // Timer State: 2 mins 10 secs = 130 seconds
-  const [timeLeft, setTimeLeft] = useState(130); 
-  
+  const [timeLeft, setTimeLeft] = useState(130);
+
   const inputRefs = useRef([]);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const { showAlert } = useAlert();
   const { login } = useAuth();
 
@@ -55,7 +56,7 @@ export default function OtpVerify() {
   // Handle individual input changes
   const handleChange = (index, e) => {
     const value = e.target.value;
-    
+
     // Allow only numeric input
     if (isNaN(value)) return;
 
@@ -81,7 +82,7 @@ export default function OtpVerify() {
   const handlePaste = (e) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').slice(0, 4).split('');
-    
+
     if (pastedData.some(isNaN)) return;
 
     const newOtp = [...otp];
@@ -98,7 +99,7 @@ export default function OtpVerify() {
   const handleVerify = async (e) => {
     e.preventDefault();
     const otpCode = otp.join('');
-    
+
     if (otpCode.length < 4) {
       showAlert("Please enter the complete 4-digit code.", "warning");
       return;
@@ -111,15 +112,15 @@ export default function OtpVerify() {
       const response = await api.post(`${BACKEND_BASE_URL}/api/v1/auth/verify-otp`, null, {
         params: { email, otp: otpCode }
       });
-      
+
       // Save the session in context
       login(response.data);
-      
+
       showAlert("Account verified successfully! Welcome to Revise.", "success", 5000);
-      
+
       // Redirect to dashboard (Local signup already set a password, no need for set-password page)
       navigate('/dashboard');
-      
+
     } catch (error) {
       console.error('OTP Verification failed', error);
       showAlert(error.response?.data?.message || 'Verification failed. Please check the code and try again.', 'error');
@@ -133,16 +134,16 @@ export default function OtpVerify() {
     if (timeLeft > 0) return;
 
     setIsResending(true);
-    
+
     try {
       await api.post(`${BACKEND_BASE_URL}/api/v1/auth/resend-otp`, null, {
         params: { email }
       });
-      
+
       showAlert("A new verification code has been sent to your email.", "info", 5000);
-      
+
       // Reset the timer back to 130 seconds (2m 10s)
-      setTimeLeft(130); 
+      setTimeLeft(130);
     } catch (error) {
       console.error('Resend failed', error);
       showAlert(error.response?.data?.message || 'Failed to resend the code. Please try again.', 'error');
@@ -153,8 +154,12 @@ export default function OtpVerify() {
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+      <Helmet>
+        <title>Verify Account | Revise</title>
+        <meta name="description" content="Enter your one-time password (OTP) to verify your Revise account and start your spaced repetition journey." />
+      </Helmet>
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 transition-colors duration-300 p-8">
-        
+
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Check your email
@@ -165,7 +170,7 @@ export default function OtpVerify() {
         </div>
 
         <form onSubmit={handleVerify} className="space-y-8">
-          
+
           {/* OTP Input Boxes */}
           <div className="flex justify-center gap-4">
             {otp.map((digit, index) => (

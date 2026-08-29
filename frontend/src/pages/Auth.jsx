@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { GoogleLogin } from '@react-oauth/google';
 import api from '../api/axiosConfig';
 import { useAuth } from '../context/AuthContext';
+import { Helmet } from 'react-helmet-async';
 import { useAlert } from '../context/AlertContext';
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '';
@@ -144,6 +145,10 @@ export default function Auth() {
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+      <Helmet>
+        <title>{activeTab === 'login' ? 'Log In' : 'Sign Up'} | Revise</title>
+        <meta name="description" content="Create a Revise account or log in to access your spaced repetition dashboard and sync your offline study topics." />
+      </Helmet>
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 transition-colors duration-300">
 
         {/* Tab Headers */}

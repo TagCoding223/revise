@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
 export default function DownloadApp() {
   const navigate = useNavigate();
@@ -59,6 +60,10 @@ export default function DownloadApp() {
 
   return (
     <div className="pb-16 relative animate-in fade-in duration-300">
+      <Helmet>
+        <title>Download Revise for Android | Offline Spaced Repetition App</title>
+        <meta name="description" content="Download the Revise Android APK. Master long-term retention on the go with real-time offline synchronization and smart spaced repetition." />
+      </Helmet>
       {/* Back to Dashboard Navigation */}
       <header className="mb-6 max-w-3xl mx-auto">
         <button
@@ -75,7 +80,7 @@ export default function DownloadApp() {
       {/* Hero Download Card */}
       <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 mb-10">
         <div className="p-8 sm:p-12 text-center">
-          
+
           {/* App Icon */}
           <div className="mx-auto flex items-center justify-center h-28 w-28 rounded-3xl bg-gradient-to-tr from-emerald-500 to-blue-600 shadow-lg shadow-blue-500/20 mb-6 text-white transform hover:scale-105 transition-transform duration-300">
             <svg className="h-16 w-16" viewBox="0 0 24 24" fill="currentColor">
@@ -159,7 +164,7 @@ export default function DownloadApp() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {features.map((feature, idx) => (
-            <div 
+            <div
               key={idx}
               className="p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow duration-200"
             >

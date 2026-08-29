@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import TopLoadingBar from '../components/shared/TopLoadingBar';
 import { useAlert } from '../context/AlertContext';
+import { Helmet } from 'react-helmet-async';
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '';
 
@@ -34,6 +35,10 @@ export default function Profile() {
 
     return (
         <div className="pb-10 relative animate-in fade-in duration-300">
+            <Helmet>
+                <title>My Profile | Revise</title>
+                <meta name="description" content="View and manage your Revise account details, verification status, and security settings." />
+            </Helmet>
             {/* Header with Back Button */}
             <header className="mb-8">
                 <button
@@ -50,7 +55,7 @@ export default function Profile() {
             {/* Profile Card */}
             <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700">
                 <div className="p-8 sm:p-12 text-center">
-                    
+
                     {/* Big Profile SVG Icon */}
                     <div className="mx-auto flex items-center justify-center h-32 w-32 rounded-full bg-blue-50 dark:bg-gray-700 border-4 border-white dark:border-gray-800 shadow-md mb-6 text-blue-600 dark:text-blue-400">
                         <svg className="h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,12 +69,12 @@ export default function Profile() {
                             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                                 {profileData.fullName || "Student"}
                             </h1>
-                            
+
                             <div className="flex items-center justify-center gap-2 mb-8">
                                 <p className="text-gray-500 dark:text-gray-400 font-medium text-lg">
                                     {profileData.email}
                                 </p>
-                                
+
                                 {/* Verification Badge */}
                                 {profileData.emailVerified ? (
                                     <div className="flex items-center text-blue-500" title="Email Verified">

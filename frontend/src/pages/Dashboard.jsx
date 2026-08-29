@@ -4,6 +4,7 @@ import { TopicCard } from '../components/shared/TopicCard';
 import TopLoadingBar from '../components/shared/TopLoadingBar';
 import { useAlert } from '../context/AlertContext';
 import { useAuth } from '../context/AuthContext';
+import { Helmet } from 'react-helmet-async';
 
 const CreateRevisionModal = lazy(() => import('../components/modals/CreateRevisionModal'));
 const UpdateRevisionModal = lazy(() => import('../components/modals/UpdateRevisionModal'));
@@ -115,6 +116,10 @@ export default function Dashboard() {
 
     return (
         <div className="pb-10 relative">
+            <Helmet>
+                <title>Dashboard | Revise</title>
+                <meta name="description" content="Manage your study topics, track your daily revision tasks, and apply active recall to master your subjects." />
+            </Helmet>
             {/* Dashboard Header */}
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
                 <div>
@@ -127,7 +132,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     <button
-                        onClick={() => setIsReviseAllOpen(true)} 
+                        onClick={() => setIsReviseAllOpen(true)}
                         disabled={todayTopics.length === 0 || isProcessingBulk}
                         className="flex-1 sm:flex-none px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-green-400 dark:disabled:bg-green-800 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center cursor-pointer"
                     >
@@ -230,7 +235,7 @@ export default function Dashboard() {
 
             {/* Modals Integration */}
             <Suspense fallback={<TopLoadingBar />}>
-                
+
                 {isCreateOpen && (
                     <CreateRevisionModal
                         isOpen={isCreateOpen}
