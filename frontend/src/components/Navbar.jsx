@@ -16,7 +16,6 @@ export default function Navbar() {
 
   return (
     <nav className="w-full border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 transition-colors duration-300">
-      {/* Max-width container to keep content centered per your requirements */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           
@@ -29,8 +28,21 @@ export default function Navbar() {
           </Link>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             
+            {/* Download Android App Button */}
+            <Link
+              to="/download"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800/60 transition-all duration-200 cursor-pointer"
+              title="Download Android App"
+            >
+              {/* Android Robot SVG Icon */}
+              <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993 0 .5511-.4483.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9994.4482.9994.9993 0 .5511-.4483.9997-.9994.9997m11.4045-6.02l1.996-3.4572c.1554-.269.0631-.6135-.2059-.7689-.269-.1554-.6135-.0631-.7689.2059l-2.0211 3.5008C15.3402 8.169 13.7228 7.8286 12 7.8286s-3.3402.3404-4.8816.9724L5.0973 5.3002c-.1554-.269-.4999-.3613-.7689-.2059-.269.1554-.3613.4999-.2059.7689l1.996 3.4572C2.6105 11.2587.318 14.8291 0 19.1429h24c-.318-4.3138-2.6105-7.8842-6.1185-9.8215" />
+              </svg>
+              <span className="hidden sm:inline">App</span>
+            </Link>
+
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
@@ -38,12 +50,10 @@ export default function Navbar() {
               aria-label="Toggle Dark Mode"
             >
               {isDark ? (
-                // Moon Icon (Dark Mode Active)
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
               ) : (
-                // Sun Icon (Light Mode Active)
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
@@ -52,8 +62,7 @@ export default function Navbar() {
 
             {/* Authentication Action Button */}
             {user ? (
-              <div className="flex items-center space-x-4">
-                {/* User Profile Icon */}
+              <div className="flex items-center space-x-2 sm:space-x-3">
                 <Link 
                   to="/profile"
                   className="flex items-center justify-center p-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
