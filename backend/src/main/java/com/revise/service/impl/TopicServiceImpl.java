@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -307,4 +308,24 @@ public class TopicServiceImpl implements TopicService {
         return new ApiResponse(true, "Sync complete: " + createdCount + " created, " + updatedCount + " updated.");
     }
 
+
+    /**
+     * GARBAGE COLLECTOR
+     * Runs automatically every day at 2:00 AM server time.
+     * Hard-deletes any topic that was soft-deleted more than 30 days ago.
+     */
+    @Scheduled(cron = "0 0 2 * * ?")
+    @Transactional
+    public void cleanupOldDeletedTopics() {
+        // Calculate the date 30 days ago from right now
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        
+        // Let the database efficiently bulk-delete the rows
+        int deletedCount = topicRepository.permanentlyDeleteOldTombstones(thirtyDaysAgo);
+        
+        if (deletedCount > 0) {
+            System.out.println("Garbage Collector: Permanently deleted " + deletedCount + " old topics.");
+            logger.info("Garbage Collector: Permanently deleted " + deletedCount + " old topics.");
+        }
+    }
 }
