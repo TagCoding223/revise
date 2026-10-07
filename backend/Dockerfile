@@ -1,12 +1,19 @@
 # Build stage
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+FROM eclipse-temurin:26-jdk-noble AS build
 WORKDIR /app
-COPY . .
-RUN mvn clean package -DskipTests
+
+# Copy the maven wrapper and pom file first to leverage Docker caching
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+RUN ./mvnw dependency:go-offline
+
+# Copy source code and build the application
+COPY src ./src
+RUN ./mvnw clean package -DskipTests
 
 # Run stage
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:26-jre-noble
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
